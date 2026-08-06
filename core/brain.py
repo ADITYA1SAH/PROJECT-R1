@@ -39,7 +39,6 @@ from core.handlers.mood_handler import handle_mood
 from core.handlers.last_message_handler import handle_last_message
 from core.handlers.recall_handler import handle_recall
 from core.handlers.unknown_handler import handle_unknown
-from core.handlers.owner_handler import require_owner
 from core.handlers.identity_handler import handle_identity
 from core.handlers.override_handler import handle_override
 from core.handlers.greeting_handler import handle_greeting
