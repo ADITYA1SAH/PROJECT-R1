@@ -23,10 +23,7 @@ from modules.emotion.state import (
     set_emotion,
     get_emotion
 )
-from modules.context.context import (
-    set_last_message,
-    get_last_message
-)
+
 from modules.emotion.reason import (
     set_reason,
     get_reason
@@ -233,8 +230,5 @@ def process_command(command):
 
     handle_unknown()
 
-    save_context(command)
     
-def save_context(command):
-    set_last_message(command)
 

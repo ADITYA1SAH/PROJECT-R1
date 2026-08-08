@@ -1,4 +1,4 @@
-from modules.context.context import get_last_message
+from modules.context.conversation import get_last_message
 
 
 def handle_last_message():

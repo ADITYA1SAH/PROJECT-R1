@@ -28,8 +28,8 @@ def add_message(message):
 
 def get_last_message():
 
-    if conversation_history:
-        return conversation_history[-1]
+    if len(conversation_history) >= 2:
+        return conversation_history[-2]
 
     return ""
 
