@@ -48,22 +48,8 @@ def process_command(command):
     command = command.strip().lower()
     if handle_greeting(command):
         return
-    
-    if handle_conversation(command):
-        return
 
-
-    # Detect emotion
-    emotion = detect_emotion(command)
-
-    if emotion != "neutral":
-
-        set_reason(command)
-        set_emotion(emotion)
-
-        handle_emotion(get_emotion())
-
-        return
+    # (Delete this entire block)
 
     if handle_identity(command):
         return
@@ -227,6 +213,26 @@ def process_command(command):
                     print(f"[{day}] {item}")
 
         return
+    # Detect emotion first
+    
+        if handle_conversation(command):
+            return
+        
+        # Detect emotion
+    emotion = detect_emotion(command)
+
+    if emotion != "neutral":
+        set_reason(command)
+        set_emotion(emotion)
+
+        handle_emotion(get_emotion())
+        return
+
+    # Continue conversation
+    if handle_conversation(command):
+        return
+
+    handle_unknown()
 
     handle_unknown()
 

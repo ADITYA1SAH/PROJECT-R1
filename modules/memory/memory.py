@@ -3,6 +3,8 @@ import os
 
 MEMORY_FILE = "database/memory.json"
 
+def normalize_key(key):
+    return key.strip().lower().replace(" ", "_")
 
 def load_memory():
     if not os.path.exists(MEMORY_FILE):
@@ -18,16 +20,21 @@ def save_memory(data):
 
 
 def remember(key, value):
+    key = normalize_key(key)
+
     memory = load_memory()
     memory[key] = value
     save_memory(memory)
 
-
 def recall(key):
+    key = normalize_key(key)
+
     memory = load_memory()
     return memory.get(key)
 
 def forget(key):
+    key = normalize_key(key)
+
     memory = load_memory()
 
     if key in memory:

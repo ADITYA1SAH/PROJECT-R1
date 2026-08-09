@@ -8,4 +8,5 @@ def handle_show_memory():
     print("\n----- Memory -----")
 
     for key, value in memory.items():
-        print(f"{key} : {value}")
+        display_key = key.replace("_", " ").title()
+        print(f"{display_key} : {value}")
