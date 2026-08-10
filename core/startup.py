@@ -1,5 +1,5 @@
 from datetime import datetime
-from config import APP_NAME, VERSION, SHOW_BANNER
+from config import APP_NAME, VERSION, SHOW_BANNER, BANNER
 from modules.memory.memory import recall
 from core.brain import process_command
 from modules.session.last_seen import (
@@ -28,9 +28,7 @@ def get_greeting():
 
 def start():
     if SHOW_BANNER:
-        print("=" * 35)
-        print(f"     {APP_NAME} {VERSION}")
-        print("=" * 35)
+        print(BANNER)
 
     last_seen = get_last_seen()    # ← INSERT HERE
     name = recall("name")

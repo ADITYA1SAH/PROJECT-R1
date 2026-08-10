@@ -1,11 +1,56 @@
+# =========================
+# Memory
+# =========================
+
 from core.handlers.memory_handler import handle_remember
+from core.handlers.recall_handler import handle_recall
+from core.handlers.forget_handler import handle_forget
+from core.handlers.show_memory_handler import handle_show_memory
+
+# =========================
+# Identity
+# =========================
+
+from core.handlers.identity_handler import handle_identity
 from core.handlers.owner_handler import require_owner
-from modules.memory.memory import remember, forget
-from modules.session.session import (
-    add_command,
-    get_command_count,
-    get_session_minutes
+from core.handlers.override_handler import handle_override
+
+# =========================
+# Conversation
+# =========================
+
+from core.handlers.greeting_handler import handle_greeting
+from core.handlers.conversation_handler import handle_conversation
+from core.handlers.last_message_handler import handle_last_message
+from core.handlers.mood_handler import handle_mood
+from core.handlers.unknown_handler import handle_unknown
+
+# =========================
+# Emotion
+# =========================
+
+from modules.emotion.emotion import detect_emotion
+from modules.emotion.state import (
+    set_emotion,
+    get_emotion
 )
+from modules.emotion.reason import (
+    set_reason,
+    get_reason
+)
+from core.handlers.emotion_handler import handle_emotion
+
+# =========================
+# Session
+# =========================
+
+from modules.session.session import add_command
+from core.handlers.session_handler import handle_show_session
+
+# =========================
+# Language Parser
+# =========================
+
 from modules.language.language import (
     get_memory_statement,
     get_remember_command,
@@ -13,162 +58,172 @@ from modules.language.language import (
     get_mood_command,
     get_last_message_command
 )
-from modules.emotion.emotion import (
-    detect_emotion,
-    emotion_icon
-)
-
-from modules.emotion.responses import RESPONSES
-from modules.emotion.state import (
-    set_emotion,
-    get_emotion
-)
-
-from modules.emotion.reason import (
-    set_reason,
-    get_reason
-)
-from core.handlers.emotion_handler import handle_emotion
-from core.handlers.forget_handler import handle_forget
-from core.handlers.show_memory_handler import handle_show_memory
-from core.handlers.session_handler import handle_show_session
-from core.handlers.mood_handler import handle_mood
-from core.handlers.last_message_handler import handle_last_message
-from core.handlers.recall_handler import handle_recall
-from core.handlers.unknown_handler import handle_unknown
-from core.handlers.identity_handler import handle_identity
-from core.handlers.override_handler import handle_override
-from core.handlers.greeting_handler import handle_greeting
-from core.handlers.conversation_handler import handle_conversation
+from core.handlers.version_handler import handle_version
 
 def process_command(command):
 
-    add_command()
+    # =========================
+    # Session
+    # =========================
 
+    add_command()
     command = command.strip().lower()
+
+    # =========================
+    # Greeting
+    # =========================
+
     if handle_greeting(command):
         return
 
-    # (Delete this entire block)
+    # =========================
+    # Identity
+    # =========================
 
     if handle_identity(command):
         return
+
     if handle_override(command):
         return
-    
-    # Natural language memory
+
+    # =========================
+    # Natural Language Memory
+    # =========================
+
     result = get_memory_statement(command)
 
     if result:
-
         if require_owner():
             handle_remember(result)
-
         return
 
+    # =========================
+    # Manual Remember
+    # =========================
 
-    # Manual remember command
     remember_result = get_remember_command(command)
 
     if remember_result:
-
         if require_owner():
             handle_remember(remember_result)
-
         return
-    
+
+    # =========================
+    # Recall
+    # =========================
+
     recall_result = get_recall_command(command)
 
     if recall_result:
-
         handle_recall(recall_result)
-
         return
-    
-    mood_result = get_mood_command(command)
 
-    if mood_result:
+    # =========================
+    # Mood
+    # =========================
 
+    if get_mood_command(command):
         handle_mood()
-
         return
-    
-    last_message_result = get_last_message_command(command)
 
-    if last_message_result:
+    # =========================
+    # Last Message
+    # =========================
 
+    if get_last_message_command(command):
         handle_last_message()
-
         return
-    
-    if command.startswith("forget "):
 
+    # =========================
+    # Forget
+    # =========================
+
+    if command.startswith("forget "):
         if require_owner():
             handle_forget(command)
-
         return
-    
-    if command == "show memory":
 
+    # =========================
+    # Show Memory
+    # =========================
+
+    if command == "show memory":
         if require_owner():
             handle_show_memory()
+        return
 
+    # =========================
+    # Version
+    # =========================
+
+    if command == "version":
+        handle_version()
         return
     
+    # =========================
+    # Show Session
+    # =========================
+
     if command == "show session":
-
         handle_show_session()
-
         return
-    
+
+    # =========================
+    # Show Experiences
+    # =========================
+
     if command == "show experiences":
 
         from modules.memory.experience import get_recent
 
         print()
-
         print("========== Recent Experiences ==========")
 
         for i, exp in enumerate(get_recent(), start=1):
-
             print(f"{i}. {exp}")
-            
+
         return
+
+    # =========================
+    # Show Today
+    # =========================
+
     if command == "show today":
 
         from modules.memory.daily_memory import get_today
 
         print()
-
         print("========== Today ==========")
 
         for item in get_today():
-
             print("-", item)
 
         return
+
+    # =========================
+    # Show Yesterday
+    # =========================
 
     if command == "show yesterday":
 
         from modules.memory.daily_memory import get_yesterday
 
         print()
-
         print("========== Yesterday ==========")
 
         yesterday = get_yesterday()
 
         if not yesterday:
-
             print("No memories from yesterday.")
-
         else:
-
             for item in yesterday:
-    
                 print("-", item)
 
         return
+
+    # =========================
+    # Search Memories
+    # =========================
 
     if command.startswith("find "):
 
@@ -179,62 +234,53 @@ def process_command(command):
 
         experiences = search_experiences(keyword)
         daily = search_daily(keyword)
-        experience_count = len(experiences)
-        daily_count = len(daily)
-        total = experience_count + daily_count
 
         print()
         print(f"========== Search: {keyword} ==========")
         print()
-        print(f"Experience Matches : {experience_count}")
-        print(f"Daily Matches      : {daily_count}")
-        print(f"Total Matches      : {total}")
-        
+        print(f"Experience Matches : {len(experiences)}")
+        print(f"Daily Matches      : {len(daily)}")
+        print(f"Total Matches      : {len(experiences) + len(daily)}")
+
         if not experiences and not daily:
-
             print("No matching memories found.")
+            return
 
-        else:
+        if experiences:
+            print("\nExperiences:")
+            for i, item in enumerate(experiences, start=1):
+                print(f"{i}. {item}")
 
-            if experiences:
-
-                print("\nExperiences:")
-
-                for i, item in enumerate(experiences, start=1):
-
-                    print(f"{i}. {item}")
-
-            if daily:
-
-                print("\nDaily Journal:")
-
-                for day, item in daily:
-
-                    print(f"[{day}] {item}")
+        if daily:
+            print("\nDaily Journal:")
+            for day, item in daily:
+                print(f"[{day}] {item}")
 
         return
-    # Detect emotion first
-    
-        if handle_conversation(command):
-            return
-        
-        # Detect emotion
+
+    # =========================
+    # Emotion Detection
+    # =========================
+
     emotion = detect_emotion(command)
 
     if emotion != "neutral":
+
         set_reason(command)
         set_emotion(emotion)
 
         handle_emotion(get_emotion())
         return
 
-    # Continue conversation
+    # =========================
+    # Continue Conversation
+    # =========================
+
     if handle_conversation(command):
         return
 
-    handle_unknown()
+    # =========================
+    # Unknown
+    # =========================
 
     handle_unknown()
-
-    
-
