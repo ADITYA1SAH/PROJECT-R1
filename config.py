@@ -14,6 +14,7 @@ AI_MODE = "Offline"
 VOICE_ENABLED = False
 FACE_ENABLED = False
 INTERNET_ENABLED = False
+USE_LLM = True
 SHOW_BANNER = True
 BANNER = r"""
 ============================================================

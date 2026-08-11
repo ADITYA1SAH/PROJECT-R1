@@ -1,10 +1,11 @@
 {
     "name": "aditya",
     "favorite_food": "pizza",
-    "last_seen": "2026-08-10T17:58:31.104002",
+    "last_seen": "2026-08-11T17:44:39.000723",
     "last_message": "who are you",
     "current_emotion": "happy",
     "favorite_color": "blue",
     "favourite_movie": "interstellar",
-    "age": "18"
+    "age": "18",
+    "hobby": "robotics"
 }

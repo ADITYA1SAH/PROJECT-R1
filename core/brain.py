@@ -59,6 +59,8 @@ from modules.language.language import (
     get_last_message_command
 )
 from core.handlers.version_handler import handle_version
+from config import USE_LLM
+from modules.llm.llm import generate_response
 
 def process_command(command):
 
@@ -283,4 +285,11 @@ def process_command(command):
     # Unknown
     # =========================
 
-    handle_unknown()
+    if USE_LLM:
+
+        print()
+        print("RAF:", generate_response(command))
+
+    else:
+
+        handle_unknown()
