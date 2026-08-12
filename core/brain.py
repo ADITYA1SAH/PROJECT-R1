@@ -61,6 +61,7 @@ from modules.language.language import (
 from core.handlers.version_handler import handle_version
 from config import USE_LLM
 from modules.llm.llm import generate_response
+from modules.prompting.prompt_builder import build_prompt
 
 def process_command(command):
 
@@ -287,8 +288,10 @@ def process_command(command):
 
     if USE_LLM:
 
+        prompt = build_prompt(command)
+
         print()
-        print("RAF:", generate_response(command))
+        print("RAF:", generate_response(prompt))
 
     else:
 
