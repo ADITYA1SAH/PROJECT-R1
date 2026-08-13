@@ -18,9 +18,13 @@ def get_memory_statement(command):
 
 
 def get_remember_command(command):
+
     if command.startswith("remember "):
 
-        data = command.replace("remember ", "", 1)
+        data = command.replace("remember ", "", 1).strip()
+
+        # Format:
+        # remember key = value
 
         if "=" in data:
 
@@ -28,11 +32,26 @@ def get_remember_command(command):
 
             return {
                 "intent": "remember",
-                "key": key.strip(),
+                "key": key.strip().replace(" ", "_"),
                 "value": value.strip()
             }
 
+        # Format:
+        # remember my project is PROJECT R1
+
+        match = re.match(r"my (.+) is (.+)", data)
+
+        if match:
+
+            return {
+                "intent": "remember",
+                "key": match.group(1).strip().replace(" ", "_"),
+                "value": match.group(2).strip()
+            }
+
     return None
+
+
 def get_recall_command(command):
 
     if command.startswith("what is "):

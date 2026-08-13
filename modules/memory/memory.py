@@ -47,3 +47,24 @@ def forget(key):
 
 def get_all_memory():
     return load_memory()
+
+def find_relevant_memories(question):
+
+    memories = get_all_memory()
+
+    question = question.lower()
+
+    relevant = {}
+
+    for key, value in memories.items():
+
+        words = key.replace("_", " ").split()
+
+        for word in words:
+
+            if word in question:
+
+                relevant[key] = value
+                break
+
+    return relevant

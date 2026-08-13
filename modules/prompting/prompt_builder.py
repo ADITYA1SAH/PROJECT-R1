@@ -1,8 +1,19 @@
+from modules.memory.memory import find_relevant_memories
 # ==========================
 # RAF Prompt Builder
 # ==========================
 
 def build_prompt(user_message):
+
+    memories = find_relevant_memories(user_message)
+
+    memory_text = ""
+
+    if memories:
+        memory_text = "Known Facts:\n"
+
+        for key, value in memories.items():
+            memory_text += f"- {key}: {value}\n"
 
     prompt = f"""
 You are RAF.
@@ -42,6 +53,8 @@ Speak like a real companion instead of an AI assistant.
 Current User:
 
 Aditya
+
+{memory_text}
 
 User:
 
