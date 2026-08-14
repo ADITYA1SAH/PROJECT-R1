@@ -1,12 +1,13 @@
 {
     "name": "aditya",
     "favorite_food": "pizza",
-    "last_seen": "2026-08-13T18:53:01.656790",
+    "last_seen": "2026-08-14T17:40:48.912143",
     "last_message": "who are you",
     "current_emotion": "happy",
     "favorite_color": "blue",
     "favourite_movie": "interstellar",
     "age": "18",
     "hobby": "robotics",
-    "project": "project r1"
+    "project": "project r1",
+    "goal": "build raf into a fully autonomous ai companion"
 }

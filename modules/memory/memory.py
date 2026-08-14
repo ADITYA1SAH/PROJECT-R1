@@ -54,17 +54,83 @@ def find_relevant_memories(question):
 
     question = question.lower()
 
+    aliases = {
+        "project": [
+            "project",
+            "build",
+            "building",
+            "creating",
+            "work",
+            "working"
+        ],
+
+        "goal": [
+            "goal",
+            "dream",
+            "purpose",
+            "mission",
+            "ambition",
+            "objective"
+        ],
+
+        "hobby": [
+            "hobby",
+            "interest",
+            "passion",
+            "like",
+            "enjoy"
+        ],
+
+        "favorite_food": [
+            "food",
+            "eat",
+            "meal",
+            "favorite food",
+            "favourite food"
+        ],
+
+        "favourite_movie": [
+            "movie",
+            "film",
+            "favorite movie",
+            "favourite movie"
+        ]
+    }
+
     relevant = {}
 
     for key, value in memories.items():
+
+        score = 0
 
         words = key.replace("_", " ").split()
 
         for word in words:
 
             if word in question:
+                score += 2
 
-                relevant[key] = value
-                break
+        if key in aliases:
 
-    return relevant
+            for alias in aliases[key]:
+
+                if alias in question:
+                    score += 3
+
+        if score > 0:
+            relevant[key] = (value, score)
+
+    # Sort by score (highest first)
+    sorted_memories = sorted(
+        relevant.items(),
+        key=lambda item: item[1][1],
+        reverse=True
+    )
+
+    # Keep only top 5 memories
+    result = {}
+
+    for key, (value, score) in sorted_memories[:5]:
+        result[key] = value
+
+    return result

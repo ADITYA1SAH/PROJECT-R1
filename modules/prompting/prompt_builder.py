@@ -61,6 +61,6 @@ User:
 {user_message}
 
 RAF:
-"""
-
+""" 
+    
     return prompt.strip()
