@@ -1,5 +1,7 @@
 import json
 import os
+from difflib import SequenceMatcher
+import re
 
 MEMORY_FILE = "database/memory.json"
 
@@ -54,9 +56,16 @@ def find_relevant_memories(question):
 
     question = question.lower()
 
+    # Remove punctuation
+    question = re.sub(r"[^\w\s]", "", question)
+
+    # Normalize common question forms
+    question = question.replace("whats", "what is")
+
     aliases = {
         "project": [
             "project",
+            "projct",
             "build",
             "building",
             "creating",
@@ -66,6 +75,8 @@ def find_relevant_memories(question):
 
         "goal": [
             "goal",
+            "gole",
+            "goals",
             "dream",
             "purpose",
             "mission",
@@ -75,6 +86,8 @@ def find_relevant_memories(question):
 
         "hobby": [
             "hobby",
+            "hobbie",
+            "hobbies",
             "interest",
             "passion",
             "like",
@@ -99,38 +112,98 @@ def find_relevant_memories(question):
 
     relevant = {}
 
+    question_words = question.split()
+
     for key, value in memories.items():
 
         score = 0
 
-        words = key.replace("_", " ").split()
+        memory_words = key.replace("_", " ").split()
 
-        for word in words:
+        # --------------------------------
+        # Exact key-word matching
+        # --------------------------------
 
-            if word in question:
-                score += 2
+        for memory_word in memory_words:
+
+            if memory_word in question_words:
+                score += 5
+
+        # --------------------------------
+        # Alias matching
+        # --------------------------------
 
         if key in aliases:
 
             for alias in aliases[key]:
 
-                if alias in question:
+                alias_words = alias.split()
+
+                # Single-word alias
+                if len(alias_words) == 1:
+
+                    if alias in question_words:
+                        score += 10
+
+                # Multi-word alias
+                else:
+
+                    if alias in question:
+                        score += 10
+
+        # --------------------------------
+        # Fuzzy matching
+        # --------------------------------
+
+        for question_word in question_words:
+
+            for memory_word in memory_words:
+
+                similarity = SequenceMatcher(
+                    None,
+                    question_word,
+                    memory_word
+                ).ratio()
+
+                if similarity >= 0.70:
                     score += 3
 
-        if score > 0:
-            relevant[key] = (value, score)
+                elif (
+                    len(question_word) <= 7
+                    and len(memory_word) <= 7
+                    and similarity >= 0.65
+                ):
+                    score += 3
 
-    # Sort by score (highest first)
+        # --------------------------------
+        # Save relevant memory
+        # --------------------------------
+
+        if score > 0:
+
+            relevant[key] = (
+                value,
+                score
+            )
+
+    # --------------------------------
+    # Sort by relevance
+    # --------------------------------
+
     sorted_memories = sorted(
         relevant.items(),
         key=lambda item: item[1][1],
         reverse=True
     )
 
-    # Keep only top 5 memories
+    # --------------------------------
+    # Return top 5
+    # --------------------------------
+
     result = {}
 
     for key, (value, score) in sorted_memories[:5]:
+
         result[key] = value
 
     return result

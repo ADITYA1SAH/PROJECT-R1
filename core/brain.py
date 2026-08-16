@@ -62,6 +62,10 @@ from core.handlers.version_handler import handle_version
 from config import USE_LLM
 from modules.llm.llm import generate_response
 from modules.prompting.prompt_builder import build_prompt
+from modules.conversation.context import (
+    add_message,
+    get_recent_history
+)
 
 def process_command(command):
 
@@ -71,6 +75,7 @@ def process_command(command):
 
     add_command()
     command = command.strip().lower()
+    add_message("user", command)
 
     # =========================
     # Greeting
@@ -291,7 +296,12 @@ def process_command(command):
         prompt = build_prompt(command)
 
         print()
-        print("RAF:", generate_response(prompt))
+
+        response = generate_response(prompt)
+
+        add_message("assistant", response)
+
+        print("RAF:", response)
 
     else:
 

@@ -54,11 +54,13 @@ def get_remember_command(command):
 
 def get_recall_command(command):
 
+    command = command.lower().strip()
+
     if command.startswith("what is "):
 
         question = command.replace("what is ", "", 1).strip()
 
-        question = question.replace("my ", "")
+        question = question.replace("my ", "", 1)
 
         return {
             "intent": "recall",

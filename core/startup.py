@@ -11,6 +11,7 @@ from modules.memory.experience import load_experiences
 from modules.memory.daily_memory import get_today
 from modules.memory.daily_memory import memory_count
 from modules.context.conversation import add_message
+from datetime import datetime
 
 
 def get_greeting():
@@ -54,7 +55,9 @@ def start():
         print(f"Total memories: {memory_count()}")
 
         if last_seen:
-            print(f"Last seen: {last_seen}")
+            dt = datetime.fromisoformat(last_seen)
+            formatted_last_seen = dt.strftime("%A, %d %B %Y at %I:%M %p")
+            print(f"Last seen: {formatted_last_seen}")
 
     else:
         print("\nHello! I'm R1.")
