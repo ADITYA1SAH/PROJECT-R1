@@ -281,6 +281,28 @@ def process_command(command):
         return
 
     # =========================
+    # Calendar / Date Questions
+    # =========================
+
+    from modules.calendar.calendar import find_calendar_event_in_text
+
+    calendar_event = find_calendar_event_in_text(command)
+
+    if calendar_event:
+        if USE_LLM:
+
+            prompt = build_prompt(command)
+
+            print()
+            response = generate_response(prompt)
+
+            add_message("assistant", response)
+
+            print("RAF:", response)
+
+            return
+
+    # =========================
     # Continue Conversation
     # =========================
 
@@ -296,13 +318,11 @@ def process_command(command):
         prompt = build_prompt(command)
 
         print()
-
         response = generate_response(prompt)
 
         add_message("assistant", response)
 
         print("RAF:", response)
-
     else:
 
         handle_unknown()

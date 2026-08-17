@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
+from modules.calendar.calendar import get_special_date
 
 
 TIMEZONE = "Asia/Kolkata"
@@ -18,6 +19,7 @@ def get_current_time():
         "formatted": now.strftime("%A, %d %B %Y at %I:%M:%S %p")
     }
 
+
 def get_calendar_context():
 
     current = get_current_time()
@@ -29,12 +31,19 @@ def get_calendar_context():
     yesterday = current_date - timedelta(days=1)
     tomorrow = current_date + timedelta(days=1)
 
+    today_event = get_special_date(current_date)
+    yesterday_event = get_special_date(yesterday)
+    tomorrow_event = get_special_date(tomorrow)
+
     return {
         "today": current["date"],
         "yesterday": yesterday.strftime("%Y-%m-%d"),
         "tomorrow": tomorrow.strftime("%Y-%m-%d"),
         "day": current["day"],
-        "timezone": current["timezone"]
+        "timezone": current["timezone"],
+        "today_event": today_event,
+        "yesterday_event": yesterday_event,
+        "tomorrow_event": tomorrow_event
     }
 
 

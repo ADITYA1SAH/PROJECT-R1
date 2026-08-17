@@ -5,6 +5,7 @@ from modules.time.time import (
     get_relative_time,
     get_calendar_context
 )
+from modules.calendar.calendar import find_calendar_event_in_text
 
 
 # ==========================
@@ -14,6 +15,7 @@ from modules.time.time import (
 def build_prompt(user_message):
 
     memories = find_relevant_memories(user_message)
+    calendar_event = find_calendar_event_in_text(user_message)
 
     # ==========================
     # Conversation History
@@ -55,6 +57,11 @@ def build_prompt(user_message):
     - Yesterday: {calendar["yesterday"]}
     - Tomorrow: {calendar["tomorrow"]}
     - Current day: {calendar["day"]}
+
+    SPECIAL DATES:
+    - Today's event: {calendar["today_event"]}
+    - Yesterday's event: {calendar["yesterday_event"]}
+    - Tomorrow's event: {calendar["tomorrow_event"]}
     """
     # ==========================
     # Known Memories
@@ -71,6 +78,23 @@ def build_prompt(user_message):
         for key, value in memories.items():
 
             memory_text += f"- {key}: {value}\n"
+
+    # ==========================
+    # Calendar Event Context
+    # ==========================
+
+    calendar_event_text = ""
+
+    if calendar_event:
+
+        calendar_event_text = (
+            "CALENDAR EVENT:\n"
+            "- Name: "
+            f"{calendar_event['name']}\n"
+            "- Country: "
+            f"{calendar_event['country']}\n"
+            "This is calendar knowledge, not a personal memory.\n"
+        )
 
     # ==========================
     # Final Prompt
@@ -123,8 +147,19 @@ RESPONSE RULES:
 - Never treat a guessed personal explanation as a remembered fact.
 - Never invent personal memories about Aditya.
 - Treat KNOWN FACTS ABOUT ADITYA as the only verified personal information.
-- If a personal fact is not in KNOWN FACTS ABOUT ADITYA, say you don't know it.
+- If a PERSONAL fact is not in KNOWN FACTS ABOUT ADITYA, say you don't know it.
 - Never claim RAF was created, met Aditya, or experienced an event on a specific date unless it is a verified memory.
+- Treat SPECIAL DATES as calendar knowledge, not personal memories.
+- Do not claim a date was personally meaningful to Aditya unless that is present in KNOWN FACTS ABOUT ADITYA.
+- If a date has no known special event, do not invent one.
+- Treat CALENDAR EVENT information as verified calendar knowledge.
+- Never treat calendar events as personal memories.
+- If a calendar event is provided, use it when answering questions about that date.
+- Never invent a personal connection to a calendar event.
+- Calendar knowledge describes real-world dates and events.
+- Calendar knowledge is separate from Aditya's personal memories.
+- If CALENDAR EVENT contains information relevant to the user's question, use it directly.
+- Do not say "I don't remember" when the answer is present in CALENDAR EVENT.
 
 CURRENT USER:
 
@@ -136,14 +171,23 @@ Aditya
 
 {time_text}
 
+AVAILABLE CALENDAR KNOWLEDGE:
+
+{calendar_event_text}
+
 CURRENT USER MESSAGE:
 
 {user_message}
 
 IMPORTANT:
-If the user's question asks about a personal fact, memory, event, or reason that is not explicitly present in KNOWN FACTS ABOUT ADITYA, do not guess or invent an answer. Say that you don't know or don't remember it.
+
+- Personal memories must come only from KNOWN FACTS ABOUT ADITYA.
+- Calendar events are NOT personal memories.
+- If CALENDAR EVENT contains an answer to the user's question, use that information directly.
+- Never respond with "I don't remember" when the answer is present in CALENDAR EVENT.
+- Only say you don't remember when the user is asking about a personal memory that is not available.
+- Do not invent personal experiences or connections between Aditya and a calendar event.
 
 RAF:
 """
-
     return prompt.strip()

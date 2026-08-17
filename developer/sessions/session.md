@@ -1853,3 +1853,123 @@ Phase 4.6 Status:
 
 ✅ TIME & CALENDAR CONTEXT COMPLETE
 ⚠️ PERSONAL MEMORY GROUNDING NEXT
+
+==============================
+Day 24 - Phase 4.7 Calendar & Intelligence Routing
+==============================
+Date: 2026-08-17
+Version: v0.0.3 Alpha
+Time Planned: 3 Hours
+Actual Time: ~3 Hours
+
+Completed:
+✓ Continued Phase 4 — Memory & Context Intelligence
+✓ Expanded calendar knowledge pipeline
+✓ Added fixed-date calendar knowledge
+✓ Added India Independence Day recognition
+✓ Added calendar event lookup for natural-language date questions
+✓ Added calendar event context to Prompt Builder
+✓ Separated calendar knowledge from personal memory
+✓ Fixed overly broad "what is" memory recall detection
+✓ Personal memory questions now route to the memory system
+✓ General knowledge questions now route to the LLM
+✓ Calendar questions now reach the calendar-aware LLM path
+✓ Verified August 15 → Independence Day
+✓ Verified "What is my name?" → Aditya
+✓ Verified "What is my project?" → Project R1
+✓ Verified "What is gravity?" → General LLM knowledge
+✓ Improved Ollama error handling
+✓ Diagnosed and fixed calendar/memory routing conflict
+✓ Tested complete calendar → prompt → LLM pipeline
+
+Bugs Fixed:
+✓ Fixed get_recall_command() incorrectly treating every "what is..." question as memory recall
+✓ Fixed calendar questions being intercepted before reaching the LLM
+✓ Fixed Ollama response handling when "response" is missing
+✓ Fixed temporary calendar/prompt debugging issues
+✓ Fixed missing language parser functions after modifying recall detection
+
+Architecture Improvements:
+✓ Calendar knowledge is now treated separately from personal memory
+✓ Personal recall now requires explicit personal-memory wording
+✓ General knowledge is no longer incorrectly routed to memory
+✓ Calendar knowledge can be injected into the LLM context
+✓ Ollama failures now produce controlled error handling instead of KeyError crashes
+
+Verified Routing:
+User Question
+↓
+Language Parser
+↓
+├── Personal Memory → Memory System
+├── Calendar Question → Calendar + Prompt Builder
+└── General Knowledge → LLM
+↓
+Qwen
+↓
+RAF Response
+
+Testing Results:
+✓ "What is special about August 15?" → Independence Day
+✓ "What was special about August 15?" → Independence Day
+✓ "What is my name?" → Aditya
+✓ "What is my project?" → Project R1
+✓ "What is gravity?" → General knowledge response
+✓ Calendar event detection → Working
+✓ Calendar context injection → Working
+✓ Memory/general knowledge separation → Working
+✓ LLM error handling → Working
+
+Known Issues:
+• Offline calendar currently contains only a limited number of fixed dates
+• Movable festivals and holidays still require the future online calendar system
+• Some relative-date questions may need further routing refinement
+• Calendar "holiday" status should eventually distinguish holidays from general observances
+• Personal-memory grounding still needs Python-side enforcement
+• Memory values are currently returned mostly as stored, so capitalization/response formatting can be improved later
+
+Current Progress:
+Foundation...............100%
+Brain....................100%
+Memory...................100%
+Identity.................100%
+Permissions..............100%
+Personality...............90%
+Conversation Engine......100%
+Emotion Engine...........100%
+Context Builder..........100%
+Prompt Builder............85%
+Memory Search............100%
+Memory Ranking...........100%
+Time Awareness............100%
+Calendar Context..........100%
+Calendar Routing..........100%
+LLM Integration...........50%
+Voice......................0%
+Vision.....................0%
+Workspace Control..........0%
+Local LLM.................50%
+
+Today's Milestone:
+RAF now has:
+• Timestamped conversation memory
+• Relative message timing
+• Current date and time awareness
+• Calendar context
+• Offline fixed-date calendar knowledge
+• Calendar-aware LLM responses
+• Better personal-memory separation
+• Correct routing between memory, calendar, and general knowledge
+• Improved Ollama error handling
+
+Next Goal:
+• Expand offline fixed-date calendar knowledge
+• Build stronger calendar intent detection
+• Add Python-side factual grounding
+• Improve personal-memory confidence handling
+• Separate holidays, festivals, and observances
+• Continue Phase 4.7 intelligence improvements
+
+Phase 4.7 Status:
+🟢 CALENDAR & INTELLIGENCE ROUTING OPERATIONAL
+⚠️ PERSONAL MEMORY GROUNDING NEXT
