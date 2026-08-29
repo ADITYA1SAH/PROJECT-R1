@@ -21,18 +21,22 @@ def save_memory(data):
         json.dump(data, file, indent=4)
 
 
-def remember(key, value):
+def remember(key, value, confidence=1.0):
     key = normalize_key(key)
-
     memory = load_memory()
-    memory[key] = value
+    memory[key] = {
+        "value": value,
+        "confidence": confidence
+    }
     save_memory(memory)
 
 def recall(key):
     key = normalize_key(key)
-
     memory = load_memory()
-    return memory.get(key)
+    entry = memory.get(key)
+    if isinstance(entry, dict):
+        return entry.get("value")
+    return entry
 
 def forget(key):
     key = normalize_key(key)

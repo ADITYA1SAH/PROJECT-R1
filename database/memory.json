@@ -1,7 +1,7 @@
 {
     "name": "aditya",
     "favorite_food": "pizza",
-    "last_seen": "2026-08-17T19:39:50.356622",
+    "last_seen": "2026-08-29T17:36:53.789712",
     "last_message": "who are you",
     "current_emotion": "happy",
     "favorite_color": "blue",
@@ -9,5 +9,15 @@
     "age": "18",
     "hobby": "robotics",
     "project": "project r1",
-    "goal": "build raf into a fully autonomous ai companion"
+    "goal": "build raf into a fully autonomous ai companion",
+    "my_school": "manipal public school",
+    "my_birthday": "15 may 2008",
+    "my_pet": "no pet",
+    "my_city": "lucknow",
+    "my_country": "india",
+    "my_favorite_book": "my inventions",
+    "test_key": {
+        "value": "test_value",
+        "confidence": 1.0
+    }
 }

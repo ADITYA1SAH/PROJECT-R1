@@ -66,6 +66,7 @@ from modules.conversation.context import (
     add_message,
     get_recent_history
 )
+from modules.grounding.grounding import grounding_response
 
 def process_command(command):
 
@@ -301,6 +302,20 @@ def process_command(command):
             print("RAF:", response)
 
             return
+
+    # =========================
+    # Personal Memory Grounding
+    # =========================
+
+    grounding = grounding_response(command)
+
+    if grounding:
+
+        print("RAF:", grounding)
+
+        add_message("assistant", grounding)
+
+        return
 
     # =========================
     # Continue Conversation

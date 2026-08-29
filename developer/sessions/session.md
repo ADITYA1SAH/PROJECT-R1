@@ -1973,3 +1973,85 @@ Next Goal:
 Phase 4.7 Status:
 🟢 CALENDAR & INTELLIGENCE ROUTING OPERATIONAL
 ⚠️ PERSONAL MEMORY GROUNDING NEXT
+
+==============================
+Day 25 - Phase 4.7 Completion
+==============================
+Date: 2026-08-29
+Version: v0.0.3 Alpha
+Time Planned: 3 Hours
+Actual Time: ~3 Hours
+
+Completed:
+✓ Added personal memory keys (school, birthday, pet, city, country, favorite book)
+✓ Expanded calendar to 11 fixed-date events (India + Global)
+✓ Fixed grounding edge cases ("who am i", "tell me about myself")
+✓ Added calendar intent detection (is_calendar_question)
+✓ Separated calendar events into types (national, festival)
+✓ Added basic memory confidence system (confidence scores)
+✓ Tested all new features end-to-end
+
+Bugs Fixed:
+✓ "who am i" now triggers memory recall
+✓ "tell me about myself" now triggers memory recall
+✓ Calendar questions now detected before date extraction
+✓ Memory now stores confidence with each entry
+
+Architecture Improvements:
+✓ Calendar has 11 events with types (national, festival)
+✓ Calendar intent detection prevents false positives
+✓ Memory confidence prevents treating guesses as facts
+✓ Grounding handles more personal question variations
+✓ Personal memory keys now include confidence metadata
+
+Testing Results:
+✓ Calendar length → 11 events
+✓ Calendar types → national (4), festival (7)
+✓ Calendar intent detection → Works
+✓ Memory confidence → Works
+✓ "who am i" → Allowed
+✓ "tell me about myself" → Allowed
+✓ Grounding edge cases → Passed
+
+Current Progress:
+Foundation...............100%
+Brain....................100%
+Memory...................100%
+Identity.................100%
+Permissions..............100%
+Personality...............90%
+Conversation Engine......100%
+Emotion Engine...........100%
+Context Builder..........100%
+Prompt Builder............85%
+Memory Search............100%
+Memory Ranking...........100%
+Time Awareness............100%
+Calendar Context..........100%
+Calendar Routing..........100%
+Personal Grounding........100%
+Intelligence Router.......0%
+LLM Integration...........50%
+Voice......................0%
+Vision.....................0%
+Workspace Control..........0%
+Local LLM.................50%
+
+Today's Milestone:
+RAF now has:
+• Expanded personal memory with confidence
+• Expanded offline calendar with event types
+• Calendar intent detection
+• Edge-case grounding for natural personal questions
+• Phase 4.7 officially COMPLETE
+
+Next Goal:
+• Begin Phase 4.8 — Intelligence Router
+• Build modules/routing/intent_router.py
+• Replace the giant if/elif chain in brain.py
+
+Phase 4.7 Status:
+✅ COMPLETE
+
+Phase 4.8 Status:
+🔜 NEXT
