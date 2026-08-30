@@ -67,16 +67,60 @@ from modules.conversation.context import (
     get_recent_history
 )
 from modules.grounding.grounding import grounding_response
+from modules.routing.intent_router import IntentRouter
 
 def process_command(command):
+    command = command.strip().lower()
+    add_message("user", command)
+
+    # =========================
+    # Intelligence Router
+    # =========================
+    from modules.routing.intent_router import IntentRouter
+    router = IntentRouter()
+    route = router.route(command)
+
+    # =========================
+    # Route by Intent
+    # =========================
+    if route["intent"] == "command":
+        # Commands are handled by the existing handlers in brain.py
+        pass
+    
+    elif route["intent"] == "personal":
+
+        recall_result = get_recall_command(command)
+        if recall_result:
+            handle_recall(recall_result)
+            return
+    
+    elif route["intent"] == "calendar":
+
+        prompt = build_prompt(command)
+        response = generate_response(prompt)
+        add_message("assistant", response)
+        print("RAF:", response)
+        return
+    
+    elif route["intent"] == "emotion":
+        from core.handlers.emotion_handler import handle_emotion
+        handle_emotion(route["emotion"])
+        return
+    
+    elif route["intent"] == "conversation":
+
+        prompt = build_prompt(command)
+        response = generate_response(prompt)
+        add_message("assistant", response)
+        print("RAF:", response)
+        return
 
     # =========================
     # Session
     # =========================
-
     add_command()
-    command = command.strip().lower()
-    add_message("user", command)
+
+
 
     # =========================
     # Greeting
