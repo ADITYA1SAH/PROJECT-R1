@@ -134,3 +134,11 @@ def random_follow_up(emotion):
         return ""
 
     return random.choice(FOLLOW_UP[emotion])
+
+from modules.memory.memory import recall
+
+def get_user_location():
+    location = recall("location")
+    if location:
+        return location
+    return "your location"

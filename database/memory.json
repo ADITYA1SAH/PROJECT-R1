@@ -2,7 +2,7 @@
     "name": "aditya",
     "favorite_food": "pizza",
     "last_seen": {
-        "value": "2026-08-30T17:55:41.341216",
+        "value": "2026-08-31T21:24:14.115284",
         "confidence": 1.0
     },
     "last_message": "who are you",
@@ -21,6 +21,14 @@
     "my_favorite_book": "my inventions",
     "test_key": {
         "value": "test_value",
+        "confidence": 1.0
+    },
+    "my_location": {
+        "value": "greater noida",
+        "confidence": 1.0
+    },
+    "my_timezone": {
+        "value": "asia/kolkata",
         "confidence": 1.0
     }
 }

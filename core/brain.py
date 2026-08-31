@@ -66,6 +66,7 @@ from modules.conversation.context import (
     add_message,
     get_recent_history
 )
+from modules.internet.search import search
 from modules.grounding.grounding import grounding_response
 from modules.routing.intent_router import IntentRouter
 
@@ -88,11 +89,15 @@ def process_command(command):
         pass
     
     elif route["intent"] == "personal":
-
         recall_result = get_recall_command(command)
         if recall_result:
             handle_recall(recall_result)
             return
+
+    elif route["intent"] == "personal_blocked":
+        print("RAF:", route["message"])
+        add_message("assistant", route["message"])
+        return
     
     elif route["intent"] == "calendar":
 
@@ -108,11 +113,16 @@ def process_command(command):
         return
     
     elif route["intent"] == "conversation":
-
         prompt = build_prompt(command)
         response = generate_response(prompt)
         add_message("assistant", response)
         print("RAF:", response)
+        return
+    
+    elif route["intent"] == "search":
+        result = search(command)
+        print("RAF:", result)
+        add_message("assistant", result)
         return
 
     # =========================

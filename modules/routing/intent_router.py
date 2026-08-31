@@ -1,5 +1,7 @@
-from modules.grounding.grounding import is_personal_question
+from modules.grounding.grounding import is_personal_question, grounding_response
 from modules.calendar.calendar import is_calendar_question
+from config import INTERNET_ENABLED
+from modules.internet.search import is_available
 from modules.emotion.emotion import detect_emotion
 from core.handlers.owner_handler import require_owner
 
@@ -19,13 +21,21 @@ class IntentRouter:
         }
 
     def route(self, command):
-        """
-        Returns the intent type for a given command.
-        """
+        if self._is_greeting(command):
+            return {"intent": "greeting"}
+
+        if self._is_greeting(command):
+            return {"intent": "greeting"}
+
         if self._is_command(command):
             if self.debug:
                 print(f"🔍 [Router] Command detected: {command}")
             return {"intent": "command"}
+
+        # Check if it's a personal question that's blocked by grounding
+        grounding = grounding_response(command)
+        if grounding:
+            return {"intent": "personal_blocked", "message": grounding}
 
         if self._is_personal(command):
             return {"intent": "personal"}
@@ -37,6 +47,10 @@ class IntentRouter:
         emotion = detect_emotion(command)
         if emotion != "neutral":
             return {"intent": "emotion", "emotion": emotion}
+
+        # If internet is enabled, route to search
+        if INTERNET_ENABLED and is_available():
+            return {"intent": "search"}
 
         return {"intent": "conversation"}
 
@@ -60,6 +74,13 @@ class IntentRouter:
             "show today", "show yesterday"
         )
         return command_lower.startswith(prefixes)
-
+    def _is_greeting(self, command):
+        greetings = ["hi", "hello", "hey", "good morning", "good afternoon", "good evening", "good night"]
+        return command.lower().strip() in greetings
+    
+    def _is_greeting(self, command):
+        greetings = ["hi", "hello", "hey", "good morning", "good afternoon", "good evening", "good night"]
+        return command.lower().strip() in greetings
+    
     def _is_conversation(self, command):
         return True

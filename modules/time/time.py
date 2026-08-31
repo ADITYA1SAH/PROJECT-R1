@@ -3,19 +3,27 @@ from zoneinfo import ZoneInfo
 from modules.calendar.calendar import get_special_date
 
 
-TIMEZONE = "Asia/Kolkata"
+from modules.memory.memory import recall
+
+def get_timezone():
+    # Try to get timezone from memory first
+    tz = recall("timezone")
+    if tz:
+        return tz
+    # Fallback to default
+    return "Asia/Kolkata"
 
 
 def get_current_time():
-
-    now = datetime.now(ZoneInfo(TIMEZONE))
+    tz = get_timezone()
+    now = datetime.now(ZoneInfo(tz))
 
     return {
         "timestamp": now.isoformat(),
         "date": now.strftime("%Y-%m-%d"),
         "time": now.strftime("%H:%M:%S"),
         "day": now.strftime("%A"),
-        "timezone": TIMEZONE,
+        "timezone": tz,
         "formatted": now.strftime("%A, %d %B %Y at %I:%M:%S %p")
     }
 
@@ -48,8 +56,8 @@ def get_calendar_context():
 
 
 def get_relative_time(timestamp):
-
-    current = datetime.now(ZoneInfo(TIMEZONE))
+    tz = get_timezone()
+    current = datetime.now(ZoneInfo(tz))
     message_time = datetime.fromisoformat(timestamp)
 
     difference = current - message_time
