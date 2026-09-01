@@ -48,6 +48,11 @@ class IntentRouter:
         if emotion != "neutral":
             return {"intent": "emotion", "emotion": emotion}
 
+        # Check for mood command (how are you)
+        from modules.language.language import get_mood_command
+        if get_mood_command(command):
+            return {"intent": "mood"}
+
         # If internet is enabled, route to search
         if INTERNET_ENABLED and is_available():
             return {"intent": "search"}

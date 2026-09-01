@@ -60,6 +60,8 @@ from modules.language.language import (
 )
 from core.handlers.version_handler import handle_version
 from config import USE_LLM
+from config import VOICE_ENABLED
+from modules.voice.voice import speak
 from modules.llm.llm import generate_response
 from modules.prompting.prompt_builder import build_prompt
 from modules.conversation.context import (
@@ -70,6 +72,7 @@ from modules.internet.search import search
 from modules.grounding.grounding import grounding_response
 from modules.routing.intent_router import IntentRouter
 
+
 def process_command(command):
     command = command.strip().lower()
     add_message("user", command)
@@ -77,7 +80,6 @@ def process_command(command):
     # =========================
     # Intelligence Router
     # =========================
-    from modules.routing.intent_router import IntentRouter
     router = IntentRouter()
     route = router.route(command)
 
@@ -87,7 +89,16 @@ def process_command(command):
     if route["intent"] == "command":
         # Commands are handled by the existing handlers in brain.py
         pass
-    
+
+    elif route["intent"] == "greeting":
+        from modules.personality.responses import random_greeting
+        greeting = random_greeting()
+        print("RAF:", greeting)
+        add_message("assistant", greeting)
+        if VOICE_ENABLED:
+            speak(greeting)
+        return
+
     elif route["intent"] == "personal":
         recall_result = get_recall_command(command)
         if recall_result:
@@ -97,32 +108,46 @@ def process_command(command):
     elif route["intent"] == "personal_blocked":
         print("RAF:", route["message"])
         add_message("assistant", route["message"])
+        if VOICE_ENABLED:
+            speak(route["message"])
         return
-    
-    elif route["intent"] == "calendar":
 
+    elif route["intent"] == "calendar":
         prompt = build_prompt(command)
         response = generate_response(prompt)
         add_message("assistant", response)
         print("RAF:", response)
+        if VOICE_ENABLED:
+            speak(response)
         return
-    
+
     elif route["intent"] == "emotion":
         from core.handlers.emotion_handler import handle_emotion
         handle_emotion(route["emotion"])
         return
     
+    elif route["intent"] == "mood":
+        from core.handlers.mood_handler import handle_mood
+        response = handle_mood()
+        if response and VOICE_ENABLED:
+            speak(response)
+        return
+
     elif route["intent"] == "conversation":
         prompt = build_prompt(command)
         response = generate_response(prompt)
         add_message("assistant", response)
         print("RAF:", response)
+        if VOICE_ENABLED:
+            speak(response)
         return
-    
+
     elif route["intent"] == "search":
         result = search(command)
         print("RAF:", result)
         add_message("assistant", result)
+        if VOICE_ENABLED:
+            speak(result)
         return
 
     # =========================
@@ -130,13 +155,18 @@ def process_command(command):
     # =========================
     add_command()
 
-
-
     # =========================
     # Greeting
     # =========================
 
     if handle_greeting(command):
+        # Get the greeting response from the handler
+        from modules.personality.responses import random_greeting
+        greeting = random_greeting()
+        print("RAF:", greeting)
+        add_message("assistant", greeting)
+        if VOICE_ENABLED:
+            speak(greeting)
         return
 
     # =========================
@@ -222,7 +252,7 @@ def process_command(command):
     if command == "version":
         handle_version()
         return
-    
+
     # =========================
     # Show Session
     # =========================
@@ -354,7 +384,8 @@ def process_command(command):
             add_message("assistant", response)
 
             print("RAF:", response)
-
+            if VOICE_ENABLED:
+                speak(response)
             return
 
     # =========================
@@ -368,6 +399,8 @@ def process_command(command):
         print("RAF:", grounding)
 
         add_message("assistant", grounding)
+        if VOICE_ENABLED:
+            speak(grounding)
 
         return
 
@@ -392,6 +425,8 @@ def process_command(command):
         add_message("assistant", response)
 
         print("RAF:", response)
+        if VOICE_ENABLED:
+            speak(response)
     else:
 
         handle_unknown()

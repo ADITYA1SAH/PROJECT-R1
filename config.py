@@ -11,7 +11,7 @@ DEBUG_MODE = False
 
 AI_MODE = "Offline"
 
-VOICE_ENABLED = False
+VOICE_ENABLED = True
 FACE_ENABLED = False
 INTERNET_ENABLED = True
 USE_LLM = True
