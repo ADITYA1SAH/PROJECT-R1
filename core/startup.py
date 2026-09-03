@@ -11,7 +11,7 @@ from modules.memory.experience import load_experiences
 from modules.memory.daily_memory import get_today
 from modules.memory.daily_memory import memory_count
 from modules.context.conversation import add_message
-from datetime import datetime
+import keyboard
 
 
 def get_greeting():
@@ -31,7 +31,7 @@ def start():
     if SHOW_BANNER:
         print(BANNER)
 
-    last_seen = get_last_seen()    # ← INSERT HERE
+    last_seen = get_last_seen()
     name = recall("name")
 
     load_experiences()
@@ -43,12 +43,10 @@ def start():
         today = get_today()
 
         if today:
-
             count = len(today)
 
             if count == 1:
                 print("You created 1 memory today.")
-
             else:
                 print(f"You created {count} memories today.")
 
@@ -64,19 +62,28 @@ def start():
 
     print()
 
-    update_last_seen()  # Update the last seen timestamp
+    update_last_seen()
 
-    while True:
-
+while True:
+    # Check if 'v' key is pressed for voice input
+    if keyboard.is_pressed('v'):
+        # Consume the key press so it doesn't type 'v'
+        keyboard.read_event(suppress=True)
+        print("\n🎙️ Voice mode activated... Speak now (5 seconds)")
+        from modules.voice.listen import listen_to_mic
+        command = listen_to_mic(5)
+        if not command:
+            print("No speech detected. Please type your command.")
+            continue
+    else:
         command = input(">>> ")
 
-        if not command.strip():
-            continue
+    if not command.strip():
+        continue
 
-        if command.lower() == "exit":
-            print("Goodbye!")
-            break
+    if command.lower() == "exit":
+        print("Goodbye!")
+        break
 
-        add_message(command)      # <-- Add this line
-
-        process_command(command)
+    add_message(command)
+    process_command(command)

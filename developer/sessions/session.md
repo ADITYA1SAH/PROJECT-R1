@@ -2311,3 +2311,76 @@ Phase 5 Status:
 
 Phase 6 Status:
 🟡 IN PROGRESS (Voice Output Done, Voice Input Next)
+
+==============================
+Day 29 - Phase 6: Voice Input (Speech-to-Text)
+==============================
+Date: 2026-09-03
+Version: v0.0.3 Alpha
+Time Planned: 4 Hours
+Actual Time: ~4 Hours
+
+Completed:
+✓ Installed SpeechRecognition library
+✓ Installed sounddevice (replaced PyAudio due to compilation issues)
+✓ Created modules/voice/listen.py with microphone support
+✓ Integrated Google Speech Recognition for STT
+✓ Added voice input to RAF's command loop (startup.py)
+✓ Added fallback to typing if no speech detected
+✓ Tested end-to-end voice-to-text pipeline
+✓ Added keyboard hotkey ('v') for voice activation
+
+Bugs Fixed:
+✓ PyAudio compilation errors (switched to sounddevice)
+✓ File-locking error on temp WAV files (added delay + retry)
+✓ Voice input not working in startup.py (fixed import and loop logic)
+
+Architecture Improvements:
+✓ Added voice input module (modules/voice/listen.py)
+✓ Voice input is optional — press 'v' to activate
+✓ Falls back to typing if no speech or microphone unavailable
+✓ Integrated with existing conversation context
+
+Testing Results:
+✓ "hello" → Heard and processed correctly
+✓ "what is my name" → Heard and processed correctly
+✓ "show memory" → Heard and processed correctly
+✓ Voice → Text → RAF response pipeline verified
+
+Current Progress:
+Foundation...............100%
+Brain....................100%
+Memory...................100%
+Identity.................100%
+Permissions..............100%
+Personality...............90%
+Conversation Engine......100%
+Emotion Engine...........100%
+Context Builder..........100%
+Prompt Builder............85%
+Memory Search............100%
+Memory Ranking...........100%
+Time Awareness............100%
+Calendar Context..........100%
+Calendar Routing..........100%
+Personal Grounding........100%
+Intelligence Router.......100%
+Internet Search...........100%
+Voice Output.............100%
+Voice Input..............100%
+Vision.....................0%
+Workspace Control..........0%
+Local LLM.................50%
+
+Today's Milestone:
+RAF can now:
+• Listen to your voice through the microphone
+• Convert speech to text using Google STT
+• Process voice commands just like typed commands
+• Fall back to typing if voice fails
+• Be activated by pressing 'v' (no forced mic)
+
+Next Goal:
+• Fix voice activation hotkey ('v' key) not suppressing key input
+• Improve conversation flow and naturalness
+• Begin Phase 7 — Vision (Webcam, Face, Lens)
