@@ -58,6 +58,11 @@ from modules.language.language import (
     get_mood_command,
     get_last_message_command
 )
+
+# =========================
+# Other Imports
+# =========================
+
 from core.handlers.version_handler import handle_version
 from config import USE_LLM
 from config import VOICE_ENABLED
@@ -99,6 +104,20 @@ def process_command(command):
             speak(greeting)
         return
 
+    elif route["intent"] == "memory":
+        result = get_memory_statement(command) or get_remember_command(command)
+        if result:
+            if require_owner():
+                handle_remember(result)
+        return
+
+    elif route["intent"] == "recall":
+        from core.handlers.recall_handler import handle_recall
+        result = get_recall_command(command)
+        if result:
+            handle_recall(result)
+        return
+
     elif route["intent"] == "personal":
         recall_result = get_recall_command(command)
         if recall_result:
@@ -121,11 +140,33 @@ def process_command(command):
             speak(response)
         return
 
+    elif route["intent"] == "search":
+        result = search(command)
+        print("RAF:", result)
+        add_message("assistant", result)
+        if VOICE_ENABLED:
+            speak(result)
+        return
+
+    elif route["intent"] == "self_question":
+        command_lower = command.lower()
+        if "name" in command_lower:
+            response = "My name is RAF — Revolutionary Artificial Friend."
+        elif "internet" in command_lower or "online" in command_lower:
+            response = "Yes, I can search the internet when you ask me to. I use DuckDuckGo for searches."
+        else:
+            response = "I'm RAF, your revolutionary artificial friend. I'm here to help."
+        print("RAF:", response)
+        add_message("assistant", response)
+        if VOICE_ENABLED:
+            speak(response)
+        return
+
     elif route["intent"] == "emotion":
         from core.handlers.emotion_handler import handle_emotion
         handle_emotion(route["emotion"])
         return
-    
+
     elif route["intent"] == "mood":
         from core.handlers.mood_handler import handle_mood
         response = handle_mood()
@@ -142,14 +183,6 @@ def process_command(command):
             speak(response)
         return
 
-    elif route["intent"] == "search":
-        result = search(command)
-        print("RAF:", result)
-        add_message("assistant", result)
-        if VOICE_ENABLED:
-            speak(result)
-        return
-
     # =========================
     # Session
     # =========================
@@ -160,7 +193,6 @@ def process_command(command):
     # =========================
 
     if handle_greeting(command):
-        # Get the greeting response from the handler
         from modules.personality.responses import random_greeting
         greeting = random_greeting()
         print("RAF:", greeting)
@@ -184,7 +216,6 @@ def process_command(command):
     # =========================
 
     result = get_memory_statement(command)
-
     if result:
         if require_owner():
             handle_remember(result)
@@ -195,7 +226,6 @@ def process_command(command):
     # =========================
 
     remember_result = get_remember_command(command)
-
     if remember_result:
         if require_owner():
             handle_remember(remember_result)
@@ -206,7 +236,6 @@ def process_command(command):
     # =========================
 
     recall_result = get_recall_command(command)
-
     if recall_result:
         handle_recall(recall_result)
         return
@@ -266,15 +295,11 @@ def process_command(command):
     # =========================
 
     if command == "show experiences":
-
         from modules.memory.experience import get_recent
-
         print()
         print("========== Recent Experiences ==========")
-
         for i, exp in enumerate(get_recent(), start=1):
             print(f"{i}. {exp}")
-
         return
 
     # =========================
@@ -282,15 +307,11 @@ def process_command(command):
     # =========================
 
     if command == "show today":
-
         from modules.memory.daily_memory import get_today
-
         print()
         print("========== Today ==========")
-
         for item in get_today():
             print("-", item)
-
         return
 
     # =========================
@@ -298,20 +319,15 @@ def process_command(command):
     # =========================
 
     if command == "show yesterday":
-
         from modules.memory.daily_memory import get_yesterday
-
         print()
         print("========== Yesterday ==========")
-
         yesterday = get_yesterday()
-
         if not yesterday:
             print("No memories from yesterday.")
         else:
             for item in yesterday:
                 print("-", item)
-
         return
 
     # =========================
@@ -319,36 +335,28 @@ def process_command(command):
     # =========================
 
     if command.startswith("find "):
-
         from modules.memory.experience import search_experiences
         from modules.memory.daily_memory import search_daily
-
         keyword = command[5:].strip()
-
         experiences = search_experiences(keyword)
         daily = search_daily(keyword)
-
         print()
         print(f"========== Search: {keyword} ==========")
         print()
         print(f"Experience Matches : {len(experiences)}")
         print(f"Daily Matches      : {len(daily)}")
         print(f"Total Matches      : {len(experiences) + len(daily)}")
-
         if not experiences and not daily:
             print("No matching memories found.")
             return
-
         if experiences:
             print("\nExperiences:")
             for i, item in enumerate(experiences, start=1):
                 print(f"{i}. {item}")
-
         if daily:
             print("\nDaily Journal:")
             for day, item in daily:
                 print(f"[{day}] {item}")
-
         return
 
     # =========================
@@ -356,12 +364,9 @@ def process_command(command):
     # =========================
 
     emotion = detect_emotion(command)
-
     if emotion != "neutral":
-
         set_reason(command)
         set_emotion(emotion)
-
         handle_emotion(get_emotion())
         return
 
@@ -370,19 +375,13 @@ def process_command(command):
     # =========================
 
     from modules.calendar.calendar import find_calendar_event_in_text
-
     calendar_event = find_calendar_event_in_text(command)
-
     if calendar_event:
         if USE_LLM:
-
             prompt = build_prompt(command)
-
             print()
             response = generate_response(prompt)
-
             add_message("assistant", response)
-
             print("RAF:", response)
             if VOICE_ENABLED:
                 speak(response)
@@ -393,15 +392,11 @@ def process_command(command):
     # =========================
 
     grounding = grounding_response(command)
-
     if grounding:
-
         print("RAF:", grounding)
-
         add_message("assistant", grounding)
         if VOICE_ENABLED:
             speak(grounding)
-
         return
 
     # =========================
@@ -416,17 +411,12 @@ def process_command(command):
     # =========================
 
     if USE_LLM:
-
         prompt = build_prompt(command)
-
         print()
         response = generate_response(prompt)
-
         add_message("assistant", response)
-
         print("RAF:", response)
         if VOICE_ENABLED:
             speak(response)
     else:
-
         handle_unknown()

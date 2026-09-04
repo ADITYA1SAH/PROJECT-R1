@@ -64,26 +64,25 @@ def start():
 
     update_last_seen()
 
-while True:
-    # Check if 'v' key is pressed for voice input
-    if keyboard.is_pressed('v'):
-        # Consume the key press so it doesn't type 'v'
-        keyboard.read_event(suppress=True)
-        print("\n🎙️ Voice mode activated... Speak now (5 seconds)")
-        from modules.voice.listen import listen_to_mic
-        command = listen_to_mic(5)
-        if not command:
-            print("No speech detected. Please type your command.")
-            continue
-    else:
+    while True:
         command = input(">>> ")
 
-    if not command.strip():
-        continue
+        if not command.strip():
+            continue
 
-    if command.lower() == "exit":
-        print("Goodbye!")
-        break
+        # If user types "mic", switch to voice input for this command
+        if command.lower() == "mic":
+            print("\n🎙️ Voice mode activated... Speak now")
+            from modules.voice.listen import listen_to_mic
+            voice_command = listen_to_mic(5)
+            if not voice_command:
+                print("No speech detected. Please type your command.")
+                continue
+            command = voice_command
 
-    add_message(command)
-    process_command(command)
+        if command.lower() == "exit":
+            print("Goodbye!")
+            return  # This now exits the start() function properly
+
+        add_message(command)
+        process_command(command)

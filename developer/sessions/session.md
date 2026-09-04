@@ -2384,3 +2384,87 @@ Next Goal:
 • Fix voice activation hotkey ('v' key) not suppressing key input
 • Improve conversation flow and naturalness
 • Begin Phase 7 — Vision (Webcam, Face, Lens)
+
+==============================
+Day 30 - Phase 5: Conversation & Memory Upgrade + Voice Input Polish
+==============================
+Date: 2026-09-04
+Version: v0.0.3 Alpha
+Time Planned: 3 Hours
+Actual Time: ~3 Hours
+
+Completed:
+✓ Fixed V‑key voice activation (replaced with 'mic' command)
+✓ Added permanent conversation memory (saved to disk)
+✓ Added timeline memory (RAF knows when things were said)
+✓ Fixed smart mic — listens until 3 seconds of silence, no 5-second cutoff
+✓ Fixed PermissionError on temp WAV files
+✓ Fixed router ordering — memory commands processed before emotion
+✓ Added self_question intent for questions about RAF
+✓ Fixed UnboundLocalError for language parser imports in brain.py
+✓ Removed duplicate imports and cleaned up brain.py
+✓ Tested end‑to‑end voice + memory pipeline
+
+Bugs Fixed:
+✓ Fixed mic cutting off after 5 seconds (now listens until silence)
+✓ Fixed PermissionError on temp file deletion
+✓ Fixed router treating "I am in X" as emotion instead of memory
+✓ Fixed UnboundLocalError for get_memory_statement and get_remember_command
+✓ Fixed UnboundLocalError for handle_remember in brain.py
+✓ Fixed duplicate language parser imports
+
+Architecture Improvements:
+✓ Smart mic — listens until you finish speaking (3-second silence detection)
+✓ Permanent conversation storage (conversation_history.json)
+✓ Timeline memory functions (get_conversation_by_date, get_recent_conversations)
+✓ Router now prioritizes memory → recall → self_question → search → emotion
+✓ Cleaned up brain.py imports (no duplicates, no local redefinitions)
+
+Testing Results:
+✓ "my name is Aditya" → stored ✅
+✓ "remember my location is Greater Noida" → stored ✅
+✓ "what is my name" → recalled ✅
+✓ "where do I live" → recalled ✅
+✓ "mic" + voice input → works ✅
+✓ "what is your name" → instant response ✅
+✓ "are you connected to the internet" → self_question ✅
+✓ "exit" → clean exit ✅
+
+Current Progress:
+Foundation...............100%
+Brain....................100%
+Memory...................100%
+Identity.................100%
+Permissions..............100%
+Personality...............90%
+Conversation Engine......100%
+Emotion Engine...........100%
+Context Builder..........100%
+Prompt Builder............85%
+Memory Search............100%
+Memory Ranking...........100%
+Time Awareness............100%
+Calendar Context..........100%
+Calendar Routing..........100%
+Personal Grounding........100%
+Intelligence Router.......100%
+Internet Search...........100%
+Voice Output.............100%
+Voice Input..............100%
+Vision.....................0%
+Workspace Control..........0%
+Local LLM.................50%
+
+Today's Milestone:
+RAF now has:
+• Smart voice input (listens until you finish speaking)
+• Permanent conversation memory
+• Timeline-aware memory
+• Clean router priority (memory > recall > self > search > emotion)
+• Reliable 'mic' command for voice activation
+• No more file lock errors or import errors
+
+Next Goal:
+• Begin Phase 6 — Modes System (Normal, Professional, Talking, Idle, Emergency)
+• Begin Phase 7 — Multi-Model Integration (Luna-Ethos, DeepSeek-Coder, Qwen3)
+• Fix LLM GPU crashes (CPU mode already applied)
