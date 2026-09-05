@@ -74,6 +74,7 @@ def start():
         if command.lower() == "mic":
             print("\n🎙️ Voice mode activated... Speak now")
             from modules.voice.listen import listen_to_mic
+            from modules.modes.mode import get_mode_config
             voice_command = listen_to_mic(5)
             if not voice_command:
                 print("No speech detected. Please type your command.")
@@ -83,6 +84,35 @@ def start():
         if command.lower() == "exit":
             print("Goodbye!")
             return  # This now exits the start() function properly
+
+        add_message(command)
+        process_command(command)
+
+    while True:
+        # Check if we're in idle mode — only respond when spoken to
+        mode = get_mode_config()
+        if mode["name"] == "Idle Mode":
+            # No proactive messages — wait for input
+            pass
+        
+        command = input(">>> ")
+
+        if not command.strip():
+            continue
+
+        # If user types "mic", switch to voice input for this command
+        if command.lower() == "mic":
+            print("\n🎙️ Voice mode activated... Speak now")
+            from modules.voice.listen import listen_to_mic
+            voice_command = listen_to_mic(5)
+            if not voice_command:
+                print("No speech detected. Please type your command.")
+                continue
+            command = voice_command
+
+        if command.lower() == "exit":
+            print("Goodbye!")
+            return
 
         add_message(command)
         process_command(command)

@@ -89,6 +89,47 @@ def process_command(command):
     route = router.route(command)
 
     # =========================
+    # FAST COMMANDS — bypass LLM
+    # =========================
+    
+    # Mode switching
+    if command.startswith("mode "):
+        from modules.modes.mode import set_mode, get_mode_config
+        parts = command.split()
+        if len(parts) == 2:
+            mode_name = parts[1]
+            if set_mode(mode_name):
+                config = get_mode_config()
+                print(f"✅ Mode switched to: {config['name']}")
+                print(f"   {config['description']}")
+                if VOICE_ENABLED:
+                    speak(f"Switched to {config['name']}")
+            else:
+                print(f"❌ Mode '{mode_name}' not found. Available: normal, professional, talking, idle, emergency")
+        return
+
+    # Show memory
+    if command == "show memory":
+        if require_owner():
+            handle_show_memory()
+        return
+
+    # Version
+    if command == "version":
+        handle_version()
+        return
+
+    # Show session
+    if command == "show session":
+        handle_show_session()
+        return
+
+    # Exit
+    if command == "exit":
+        print("Goodbye!")
+        return
+
+    # =========================
     # Route by Intent
     # =========================
     if route["intent"] == "command":
@@ -160,6 +201,21 @@ def process_command(command):
         add_message("assistant", response)
         if VOICE_ENABLED:
             speak(response)
+        return
+
+    elif route["intent"] == "mode_switch":
+        from modules.modes.mode import set_mode, get_mode_config
+        parts = command.split()
+        if len(parts) == 2:
+            mode_name = parts[1]
+            if set_mode(mode_name):
+                config = get_mode_config()
+                print(f"✅ Mode switched to: {config['name']}")
+                print(f"   {config['description']}")
+                if VOICE_ENABLED:
+                    speak(f"Switched to {config['name']}")
+            else:
+                print(f"❌ Mode '{mode_name}' not found. Available modes: normal, professional, talking, idle, emergency")
         return
 
     elif route["intent"] == "emotion":

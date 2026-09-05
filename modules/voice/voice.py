@@ -14,11 +14,8 @@ VOICE_VOLUME = 1.0  # Not supported in pyttsx3, but we keep it
 def speak(text):
     try:
         engine = pyttsx3.init()
-        engine.setProperty('rate', VOICE_RATE)
-        engine.setProperty('voice', VOICE_ID)
-        
-        # Add slight pauses for natural rhythm
-        text = text.replace('.', '. ').replace(',', ', ')
+        settings = get_voice_settings()
+        engine.setProperty('rate', settings["rate"])
         engine.say(text)
         engine.runAndWait()
         return True
@@ -59,3 +56,25 @@ def is_available():
         return True
     except:
         return False
+
+from modules.modes.mode import get_mode_config
+
+def get_voice_settings():
+    """Adjust voice settings based on current mode."""
+    mode = get_mode_config()
+    settings = {
+        "rate": 150,  # default
+        "volume": 1.0,
+        "pitch": 1.0
+    }
+    
+    if mode["name"] == "Professional Mode":
+        settings["rate"] = 140  # slower, more deliberate
+    elif mode["name"] == "Talking Mode":
+        settings["rate"] = 180  # faster, more energetic
+    elif mode["name"] == "Idle Mode":
+        settings["rate"] = 120  # very slow, quiet
+    elif mode["name"] == "Emergency Mode":
+        settings["rate"] = 200  # fast, urgent
+    
+    return settings

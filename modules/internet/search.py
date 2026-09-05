@@ -6,6 +6,7 @@ Phase 5 — Web search capability
 import requests
 import json
 from modules.llm.llm import generate_response
+from modules.internet.browser_search import search_duckduckgo
 
 # Simple cache to avoid repeated searches
 _search_cache = {}
@@ -26,6 +27,12 @@ def search(query):
     if query in _search_cache:
         return _search_cache[query]
 
+    # For calendar/festival queries, use DuckDuckGo HTML (no blocking)
+    if any(keyword in query.lower() for keyword in ["diwali", "holiday", "festival", "when is", "date of"]):
+        result = search_duckduckgo(query)
+        _search_cache[query] = result
+        return result
+
     try:
         headers = {
             "User-Agent": "PROJECT R1/1.0 (https://github.com/your-repo; aditya@example.com)"
@@ -38,7 +45,7 @@ def search(query):
             "no_html": 1,
             "skip_disambig": 1
         }
-        response = requests.get(SEARCH_URL, headers=headers, params=params, timeout=10)
+        response = requests.get(SEARCH_URL, headers=headers, params=params, timeout=5)
         data = response.json()
 
         # Extract the answer or summary
@@ -59,24 +66,27 @@ def search(query):
         if not raw_result:
             raw_result = search_wikipedia(query)
 
-        # If we got a result, use LLM to summarize it into 1 sentence
+        # If we got a result, return the first sentence directly (no LLM)
         if raw_result:
-            from modules.llm.llm import generate_response
-            summary_prompt = f"Answer this question in 1 short sentence (max 15 words): {query}\n\nInformation: {raw_result[:500]}"
-            short_answer = generate_response(summary_prompt)
-            if short_answer and len(short_answer) < 100:
-                _search_cache[query] = short_answer
-                return short_answer
-            # Fallback: just return the first sentence
             first_sentence = raw_result.split(".")[0] + "."
             _search_cache[query] = first_sentence
             return first_sentence
+
+        # If no search result, return a clear "I don't know"
+        if not raw_result:
+            result = f"I searched for '{query}' but couldn't find a clear answer. Try rephrasing your question."
+            _search_cache[query] = result
+            return result
 
         # If still no result, return fallback message
         result = f"I searched for '{query}' but couldn't find a clear answer."
         _search_cache[query] = result
         return result
 
+    except requests.Timeout:
+        error_msg = "The search is taking too long. Please try again later."
+        _search_cache[query] = error_msg
+        return error_msg
     except Exception as e:
         error_msg = f"Search failed: {str(e)}"
         _search_cache[query] = error_msg

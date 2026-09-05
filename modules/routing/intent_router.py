@@ -59,7 +59,7 @@ class IntentRouter:
     def _is_greeting(self, command):
         greetings = ["hi", "hello", "hey", "good morning", "good afternoon", "good evening", "good night"]
         return command in greetings
-
+    
     def _is_command(self, command):
         prefixes = (
             "show ", "find ", "remember ", "forget ",
@@ -88,7 +88,6 @@ class IntentRouter:
         return any(phrase in command for phrase in self_phrases)
 
     def _is_searchable(self, command):
-        """Check if the command is a searchable query (weather, news, facts)."""
         searchable_phrases = [
             "weather",
             "temperature",
@@ -99,6 +98,9 @@ class IntentRouter:
             "how to",
             "tell me about",
             "current",
-            "today"
+            "today",
+            "diwali",      # <--- ADDED
+            "holiday",     # <--- ADDED
+            "festival"     # <--- ADDED
         ]
         return any(phrase in command for phrase in searchable_phrases)

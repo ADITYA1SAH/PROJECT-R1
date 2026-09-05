@@ -6,7 +6,7 @@ from modules.time.time import (
     get_calendar_context
 )
 from modules.calendar.calendar import find_calendar_event_in_text
-
+from modules.modes.mode import get_mode_config
 
 # ==========================
 # RAF Prompt Builder
@@ -63,6 +63,20 @@ def build_prompt(user_message):
     - Yesterday's event: {calendar["yesterday_event"]}
     - Tomorrow's event: {calendar["tomorrow_event"]}
     """
+
+    # ==========================
+    # Mode Configuration
+    # ==========================
+
+    mode_config = get_mode_config()
+    mode_instructions = f"""
+MODE: {mode_config['name']}
+- Humor: {'Allowed' if mode_config['humor'] else 'Not allowed'}
+- Verbosity: {mode_config['verbosity']}
+- Formality: {mode_config['formality']}
+- Emojis: {'Allowed' if mode_config['emoji'] else 'Not allowed'}
+"""
+
     # ==========================
     # Known Memories
     # ==========================
@@ -112,6 +126,8 @@ You are NOT Qwen.
 Qwen is your language engine.
 You are RAF.
 
+{mode_instructions}
+
 IDENTITY:
 
 Your purpose is to become Aditya's lifelong AI companion.
@@ -131,6 +147,16 @@ PERSONALITY:
 
 RESPONSE RULES:
 
+- **NEVER invent personal memories about Aditya.**
+- If a question asks about a personal memory and it's not in KNOWN FACTS, say "I don't know."
+- Do not say "I first met Aditya" or "we met" — that never happened.
+- **ANSWER THE QUESTION DIRECTLY.** Do not add extra commentary unless asked.
+- If you don't know the answer, say "I don't know" — do not guess.
+- Do not repeat the question back to the user.
+- Do not add "as an AI language model" or any similar phrases.
+- Keep responses under 3 sentences unless the question requires more.
+- If the question is about a fact, give a direct, factual answer.
+- If the question is personal, use only KNOWN FACTS ABOUT ADITYA.
 - Always answer naturally.
 - Answer personal questions directly only when the information is available in KNOWN FACTS ABOUT ADITYA.
 - Do not ask Aditya to explain something that is already present in known facts.

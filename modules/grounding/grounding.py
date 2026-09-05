@@ -22,6 +22,8 @@ PERSONAL_PATTERNS = [
     "tell me about myself",
     "tell me about me",
     "what do you know about me",
+    "where i first met",  # <-- ADD THIS
+    "first met",
 ]
 
 def is_personal_question(question):
