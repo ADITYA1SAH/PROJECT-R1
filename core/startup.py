@@ -66,6 +66,10 @@ def start():
 
     while True:
         command = input(">>> ")
+        
+        # Rewrite query (fix typos, expand abbreviations)
+        from modules.language.query_rewriter import rewrite_query
+        command = rewrite_query(command)
 
         if not command.strip():
             continue

@@ -60,6 +60,17 @@ def find_relevant_memories(question):
 
     question = question.lower()
 
+    # Use fuzzy matching for better retrieval
+    from difflib import SequenceMatcher
+    question_words = question.split()
+    
+    # If question is short, try to match directly
+    if len(question_words) <= 3:
+        for key, value in memories.items():
+            # Check if key is similar to the question
+            if SequenceMatcher(None, key.replace("_", " "), question).ratio() > 0.6:
+                return {key: value}
+            
     # Remove punctuation
     question = re.sub(r"[^\w\s]", "", question)
 

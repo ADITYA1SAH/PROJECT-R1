@@ -17,6 +17,21 @@ class IntentRouter:
     def route(self, command):
         command_lower = command.lower().strip()
 
+        # =========================
+        # FAST ANSWERS — bypass everything (INSTANT)
+        # =========================
+        from modules.llm.llm import FAST_ANSWERS
+        # Check for exact match or partial match
+        for key in FAST_ANSWERS:
+            if key in command_lower or command_lower in key:
+                return {"intent": "fast_answer", "key": key}
+            
+        # =========================
+        # MULTI-PART QUESTIONS
+        # =========================
+        if " and " in command_lower or " & " in command_lower:
+            return {"intent": "multi_part"}
+
         # 1. Greetings
         if self._is_greeting(command_lower):
             return {"intent": "greeting"}
@@ -59,7 +74,7 @@ class IntentRouter:
     def _is_greeting(self, command):
         greetings = ["hi", "hello", "hey", "good morning", "good afternoon", "good evening", "good night"]
         return command in greetings
-    
+
     def _is_command(self, command):
         prefixes = (
             "show ", "find ", "remember ", "forget ",
@@ -99,8 +114,8 @@ class IntentRouter:
             "tell me about",
             "current",
             "today",
-            "diwali",      # <--- ADDED
-            "holiday",     # <--- ADDED
-            "festival"     # <--- ADDED
+            "diwali",
+            "holiday",
+            "festival"
         ]
         return any(phrase in command for phrase in searchable_phrases)

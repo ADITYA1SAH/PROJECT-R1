@@ -8,24 +8,118 @@ import json
 from modules.llm.llm import generate_response
 from modules.internet.browser_search import search_duckduckgo
 
+# Try to use PyEnchant (real dictionary) first
+try:
+    import enchant
+    ENGLISH_DICT = enchant.Dict("en_US")
+    DICT_AVAILABLE = True
+    print("✅ PyEnchant loaded — using real English dictionary")
+except ImportError:
+    DICT_AVAILABLE = False
+    print("⚠️ PyEnchant not installed. Install with: pip install pyenchant")
+    # Fallback to pyspellchecker
+    try:
+        from spellchecker import SpellChecker
+        spell = SpellChecker()
+        SPELL_CHECK_AVAILABLE = True
+        print("⚠️ Using pyspellchecker as fallback")
+    except ImportError:
+        SPELL_CHECK_AVAILABLE = False
+        print("⚠️ SpellChecker not installed. Install with: pip install pyspellchecker")
+
 # Simple cache to avoid repeated searches
 _search_cache = {}
 
 # We'll use DuckDuckGo's API (free, no API key required)
 SEARCH_URL = "https://api.duckduckgo.com/"
 
-# Simple cache to avoid repeated searches
-_search_cache = {}
+
+def get_weather(city):
+    """Get current weather using wttr.in (free, no API key) — short format."""
+    try:
+        city = city.strip().replace(" ", "%20")
+        # Use short format: condition + temperature only
+        url = f"https://wttr.in/{city}?format=%C+%t"
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            # Return short weather string (no extra commentary)
+            return f"Weather in {city.replace('%20', ' ')}: {response.text.strip()}."
+        return None
+    except:
+        return None
+
+
+def correct_spelling(query):
+    """
+    Correct spelling errors using PyEnchant (real dictionary).
+    Falls back to pyspellchecker if not available.
+    """
+    # If using PyEnchant
+    if DICT_AVAILABLE:
+        words = query.split()
+        corrected = []
+        for word in words:
+            # Only correct words > 2 characters
+            if len(word) > 2:
+                if ENGLISH_DICT.check(word):
+                    corrected.append(word)
+                else:
+                    suggestions = ENGLISH_DICT.suggest(word)
+                    if suggestions:
+                        corrected.append(suggestions[0])  # Take the best suggestion
+                    else:
+                        corrected.append(word)  # Keep original if no suggestion
+            else:
+                corrected.append(word)
+        return " ".join(corrected)
+    
+    # Fallback to pyspellchecker
+    elif SPELL_CHECK_AVAILABLE:
+        words = query.split()
+        corrected = []
+        for word in words:
+            if len(word) > 2:
+                if word in spell.unknown([word]):
+                    correction = spell.correction(word)
+                    if correction:
+                        corrected.append(correction)
+                    else:
+                        corrected.append(word)
+                else:
+                    corrected.append(word)
+            else:
+                corrected.append(word)
+        return " ".join(corrected)
+    
+    # No spellchecker available
+    return query
 
 
 def search(query):
     """
-    Search the web using DuckDuckGo API, then summarize with LLM.
+    Search the web using DuckDuckGo API.
     Returns a short, direct answer.
     """
     # Check cache first
     if query in _search_cache:
         return _search_cache[query]
+
+    # Correct spelling before searching
+    query = correct_spelling(query)
+
+    # If it's a weather query, use the weather API (short format)
+    if "weather" in query.lower() or "temperature" in query.lower():
+        # Extract city name
+        city = query.lower().replace("weather", "").replace("temperature", "").replace("in", "").replace("what is the", "").replace("?", "").strip()
+        if not city:
+            city = "London"
+        result = get_weather(city)
+        if result:
+            _search_cache[query] = result
+            return result
+        else:
+            _search_cache[query] = "I couldn't get the weather for that location."
+            return _search_cache[query]
 
     # For calendar/festival queries, use DuckDuckGo HTML (no blocking)
     if any(keyword in query.lower() for keyword in ["diwali", "holiday", "festival", "when is", "date of"]):
@@ -66,20 +160,15 @@ def search(query):
         if not raw_result:
             raw_result = search_wikipedia(query)
 
-        # If we got a result, return the first sentence directly (no LLM)
+        # If we got a result, return SHORT answer (first sentence only)
         if raw_result:
+            # Split by period and take the first sentence
             first_sentence = raw_result.split(".")[0] + "."
             _search_cache[query] = first_sentence
             return first_sentence
 
         # If no search result, return a clear "I don't know"
-        if not raw_result:
-            result = f"I searched for '{query}' but couldn't find a clear answer. Try rephrasing your question."
-            _search_cache[query] = result
-            return result
-
-        # If still no result, return fallback message
-        result = f"I searched for '{query}' but couldn't find a clear answer."
+        result = f"I searched for '{query}' but couldn't find a clear answer. Try rephrasing your question."
         _search_cache[query] = result
         return result
 
@@ -131,7 +220,6 @@ def search_wikipedia(query):
             if data.get("extract"):
                 # Return only the first sentence (short answer)
                 extract = data["extract"]
-                # Split by period and take the first sentence
                 first_sentence = extract.split(".")[0] + "."
                 return first_sentence
             

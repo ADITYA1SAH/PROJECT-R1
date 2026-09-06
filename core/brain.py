@@ -67,7 +67,7 @@ from core.handlers.version_handler import handle_version
 from config import USE_LLM
 from config import VOICE_ENABLED
 from modules.voice.voice import speak
-from modules.llm.llm import generate_response
+from modules.llm.llm import generate_response, FAST_ANSWERS
 from modules.prompting.prompt_builder import build_prompt
 from modules.conversation.context import (
     add_message,
@@ -132,7 +132,52 @@ def process_command(command):
     # =========================
     # Route by Intent
     # =========================
-    if route["intent"] == "command":
+    if route["intent"] == "fast_answer":
+        from modules.llm.llm import FAST_ANSWERS
+        for key in FAST_ANSWERS:
+            if key in command:
+                answer = FAST_ANSWERS[key]
+                print("RAF:", answer)
+                add_message("assistant", answer)
+                if VOICE_ENABLED:
+                    speak(answer)
+                return
+
+    elif route["intent"] == "multi_part":
+        parts = command.split(" and ")
+        responses = []
+        from modules.llm.llm import FAST_ANSWERS
+        from modules.memory.memory import recall
+        for part in parts:
+            part = part.strip()
+            # Check fast answers
+            found = False
+            for key in FAST_ANSWERS:
+                if key in part:
+                    responses.append(FAST_ANSWERS[key])
+                    found = True
+                    break
+            if not found:
+                # Check memory
+                from modules.language.language import get_recall_command
+                recall_result = get_recall_command(part)
+                if recall_result:
+                    key = recall_result.get("key")
+                    if key:
+                        value = recall(key)
+                        if value:
+                            responses.append(f"Your {key.replace('_', ' ')} is {value}.")
+                            found = True
+            if not found:
+                responses.append(f"I'm not sure about '{part}'.")
+        combined = " ".join(responses)
+        print("RAF:", combined)
+        add_message("assistant", combined)
+        if VOICE_ENABLED:
+            speak(combined)
+        return
+
+    elif route["intent"] == "command":
         # Commands are handled by the existing handlers in brain.py
         pass
 
@@ -174,7 +219,7 @@ def process_command(command):
 
     elif route["intent"] == "calendar":
         prompt = build_prompt(command)
-        response = generate_response(prompt)
+        response = generate_response(prompt, user_message=command)
         add_message("assistant", response)
         print("RAF:", response)
         if VOICE_ENABLED:
@@ -203,21 +248,6 @@ def process_command(command):
             speak(response)
         return
 
-    elif route["intent"] == "mode_switch":
-        from modules.modes.mode import set_mode, get_mode_config
-        parts = command.split()
-        if len(parts) == 2:
-            mode_name = parts[1]
-            if set_mode(mode_name):
-                config = get_mode_config()
-                print(f"✅ Mode switched to: {config['name']}")
-                print(f"   {config['description']}")
-                if VOICE_ENABLED:
-                    speak(f"Switched to {config['name']}")
-            else:
-                print(f"❌ Mode '{mode_name}' not found. Available modes: normal, professional, talking, idle, emergency")
-        return
-
     elif route["intent"] == "emotion":
         from core.handlers.emotion_handler import handle_emotion
         handle_emotion(route["emotion"])
@@ -232,7 +262,7 @@ def process_command(command):
 
     elif route["intent"] == "conversation":
         prompt = build_prompt(command)
-        response = generate_response(prompt)
+        response = generate_response(prompt, user_message=command)
         add_message("assistant", response)
         print("RAF:", response)
         if VOICE_ENABLED:
@@ -285,15 +315,6 @@ def process_command(command):
     if remember_result:
         if require_owner():
             handle_remember(remember_result)
-        return
-
-    # =========================
-    # Recall
-    # =========================
-
-    recall_result = get_recall_command(command)
-    if recall_result:
-        handle_recall(recall_result)
         return
 
     # =========================
@@ -436,7 +457,7 @@ def process_command(command):
         if USE_LLM:
             prompt = build_prompt(command)
             print()
-            response = generate_response(prompt)
+            response = generate_response(prompt, user_message=command)
             add_message("assistant", response)
             print("RAF:", response)
             if VOICE_ENABLED:
@@ -463,13 +484,24 @@ def process_command(command):
         return
 
     # =========================
+    # "Did you mean?" Auto-correct
+    # =========================
+
+    from modules.language.suggestions import suggest_correction
+    suggestion = suggest_correction(command)
+    if suggestion:
+        print(f"🔧 Auto-corrected to: '{suggestion}'")
+        command = suggestion
+        # Fall through to the rest of the function
+
+    # =========================
     # Unknown
     # =========================
 
     if USE_LLM:
         prompt = build_prompt(command)
         print()
-        response = generate_response(prompt)
+        response = generate_response(prompt, user_message=command)
         add_message("assistant", response)
         print("RAF:", response)
         if VOICE_ENABLED:

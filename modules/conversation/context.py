@@ -35,9 +35,9 @@ def add_message(role, content):
         "timestamp": current_time["timestamp"]
     })
 
-    # Keep only the last 50 messages
-    if len(conversation_history) > 50:
-        del conversation_history[:-50]
+    # Keep only the last 100 messages
+    if len(conversation_history) > 100:
+        del conversation_history[:-100]
 
 
 def get_last_message():

@@ -2549,3 +2549,98 @@ Next Goal:
 • Fix Diwali/festival search accuracy (use DuckDuckGo HTML)
 • Begin Phase 18 — Vision (Face, Lens, Webcam)
 • Optimise VRAM usage further
+
+==============================
+Day 32 - Core Fixes & Polishing (Pre-Vision)
+==============================
+Date: 2026-09-06
+Version: v0.0.3 Alpha
+Time Planned: 4 Hours
+Actual Time: ~4 Hours
+
+Completed:
+✓ Added query rewriter (typo fixes, abbreviation expansion)
+✓ Integrated PyEnchant for real dictionary-based spelling correction
+✓ Added fallback pyspellchecker if PyEnchant is unavailable
+✓ Fixed cache matching for fast answers (who are you, how are you, etc.)
+✓ Added multi-part question handling ("who are you and who am i")
+✓ Shortened weather responses using wttr.in API
+✓ Forced all search results to return only the first sentence
+✓ Added auto-correct with "Did you mean?" fallback
+✓ Fixed infinite recursion bug in auto-correct
+✓ Added technical term handling in spelling correction
+✓ Updated FAST_ANSWERS with more common questions
+✓ Removed all hardcoded word lists (now uses real dictionary)
+
+Bugs Fixed:
+✓ "who are you" → now returns instantly (was going to LLM)
+✓ "how are you" → now returns instantly (cache fixed)
+✓ "how are you doing" → now returns instantly
+✓ "who are you and who am i" → now handles multi-part questions
+✓ "whats graviuy" → now corrected via dictionary → gravity
+✓ "whats the weather in noida" → now short and direct
+✓ Auto-correct infinite recursion → fixed
+✓ Memory usage → improved by reducing context size and unloading models
+
+Architecture Improvements:
+✓ Real dictionary-based spelling correction (PyEnchant)
+✓ Multi-part question detection and handling
+✓ Cache matching now works for partial matches
+✓ Weather API returns short format (no LLM commentary)
+✓ All search results are shortened to 1 sentence
+✓ Auto-correct no longer causes recursion
+✓ Removed all hardcoded word lists
+
+Testing Results:
+✓ "who are you" → Instant ✅
+✓ "how are you" → Instant ✅
+✓ "how are you doing" → Instant ✅
+✓ "what is your name" → Instant ✅
+✓ "what is my name" → Instant ✅
+✓ "who are you and who am i" → Handled ✅
+✓ "whats graviuy" → Corrected to gravity ✅
+✓ "whats the weather in noida" → Short and fast ✅
+✓ "what is the capital of France" → Short and fast ✅
+
+Current Progress:
+Foundation...............100%
+Brain....................100%
+Memory...................100%
+Identity.................100%
+Permissions..............100%
+Personality...............90%
+Conversation Engine......100%
+Emotion Engine...........100%
+Context Builder..........100%
+Prompt Builder............100%
+Memory Search............100%
+Memory Ranking...........100%
+Time Awareness............100%
+Calendar Context..........100%
+Calendar Routing..........100%
+Personal Grounding........100%
+Intelligence Router.......100%
+Internet Search...........100%
+Voice Output.............100%
+Voice Input..............100%
+Modes System.............100%
+Multi-Model Integration..100%
+Spelling Correction......100%
+Auto-Correct.............100%
+Vision.....................0%
+Workspace Control..........0%
+Local LLM.................70%
+
+Today's Milestone:
+RAF now has:
+• Real dictionary-based spelling correction (no hardcoding)
+• Instant answers for all common questions
+• Multi-part question handling
+• Short, direct weather and search responses
+• Auto-correct with no recursion
+• Reliable fast response times
+
+Next Goal:
+• Fix remaining conversation flow issues (context, follow-ups)
+• Test all edge cases
+• Begin Phase 8 — Vision (Face, Lens, Webcam)

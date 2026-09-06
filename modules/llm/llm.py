@@ -4,14 +4,33 @@ import os
 import time
 from modules.modes.mode import get_mode_config
 
-# Cache for common questions
+# Cache for common questions — instant answers
 FAST_ANSWERS = {
+    "how are you": "I'm doing great! How can I help you?",
+    "how are you doing": "I'm doing great! How can I help you?",
     "what is your name": "My name is RAF — Revolutionary Artificial Friend.",
     "who are you": "I'm RAF, your revolutionary artificial friend. I'm here to help.",
     "how are you": "I'm doing great! Thanks for asking.",
+    "how are you doing": "I'm doing great! Thanks for asking.",
     "what are you": "I'm an AI companion named RAF, built to be your friend and assistant.",
     "who created you": "I was created by Aditya, a brilliant developer with a vision.",
     "what can you do": "I can remember facts, search the internet, answer questions, and have conversations with you.",
+    "what is my name": "Your name is Aditya.",
+    "whats my name": "Your name is Aditya.",
+    "where do i live": "You live in Greater Noida.",
+    "where am i": "You are in Greater Noida.",
+    "what is my favorite color": "Your favorite color is blue.",
+    "whats my favorite color": "Your favorite color is blue.",
+    "what is my favourite color": "Your favorite color is blue.",
+    "whats my favourite color": "Your favorite color is blue.",
+    "what is my age": "You are 18 years old.",
+    "how old am i": "You are 18 years old.",
+    "what is my hobby": "Your hobby is robotics.",
+    "whats my hobby": "Your hobby is robotics.",
+    "what is my project": "Your project is PROJECT R1.",
+    "whats my project": "Your project is PROJECT R1.",
+    "what is my goal": "Your goal is to build RAF into a fully autonomous AI companion.",
+    "whats my goal": "Your goal is to build RAF into a fully autonomous AI companion.",
 }
 
 # Force CPU mode to prevent CUDA crashes
@@ -58,16 +77,23 @@ def get_model_for_mode():
     return MODEL_MAP.get(mode_name, "phi3:3.8b-mini-4k-instruct-q5_K_M")
 
 
-def generate_response(prompt, timeout=30):
+def generate_response(prompt, timeout=30, user_message=None):
     """
     Generate a response from the LLM.
     Uses cache for common questions.
     """
-    # Check cache for common questions
-    prompt_lower = prompt.lower().strip()
-    for key, answer in FAST_ANSWERS.items():
-        if key in prompt_lower:
-            return answer
+    # Check cache against the actual user message (if provided)
+    if user_message:
+        msg_lower = user_message.lower().strip()
+        for key, answer in FAST_ANSWERS.items():
+            if key in msg_lower:
+                return answer
+    else:
+        # Fallback: check the prompt
+        prompt_lower = prompt.lower().strip()
+        for key, answer in FAST_ANSWERS.items():
+            if key in prompt_lower:
+                return answer
     
     # Get the model for the current mode
     model = get_model_for_mode()

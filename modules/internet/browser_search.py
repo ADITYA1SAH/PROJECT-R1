@@ -17,7 +17,7 @@ def search_duckduckgo(query):
             page = browser.new_page()
             
             # Go to DuckDuckGo HTML
-            page.goto("https://html.duckduckgo.com/html/", timeout=10000)
+            page.goto("https://html.duckduckgo.com/html/", timeout=5000)
             
             # Type the query
             page.fill('input[name="q"]', query)
