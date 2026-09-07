@@ -25,12 +25,20 @@ class IntentRouter:
         for key in FAST_ANSWERS:
             if key in command_lower or command_lower in key:
                 return {"intent": "fast_answer", "key": key}
-            
+
         # =========================
         # MULTI-PART QUESTIONS
         # =========================
         if " and " in command_lower or " & " in command_lower:
             return {"intent": "multi_part"}
+
+        # =========================
+        # GENERIC PERSONAL LOOKUP (what is my X)
+        # =========================
+        from modules.language.language import get_personal_lookup
+        lookup_result = get_personal_lookup(command)
+        if lookup_result:
+            return {"intent": "personal_lookup", "key": lookup_result}
 
         # 1. Greetings
         if self._is_greeting(command_lower):

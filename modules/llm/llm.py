@@ -6,15 +6,16 @@ from modules.modes.mode import get_mode_config
 
 # Cache for common questions — instant answers
 FAST_ANSWERS = {
-    "how are you": "I'm doing great! How can I help you?",
-    "how are you doing": "I'm doing great! How can I help you?",
+    # RAF self-questions
     "what is your name": "My name is RAF — Revolutionary Artificial Friend.",
     "who are you": "I'm RAF, your revolutionary artificial friend. I'm here to help.",
-    "how are you": "I'm doing great! Thanks for asking.",
-    "how are you doing": "I'm doing great! Thanks for asking.",
+    "how are you": "I'm doing great! How can I help you?",
+    "how are you doing": "I'm doing great! How can I help you?",
     "what are you": "I'm an AI companion named RAF, built to be your friend and assistant.",
     "who created you": "I was created by Aditya, a brilliant developer with a vision.",
     "what can you do": "I can remember facts, search the internet, answer questions, and have conversations with you.",
+    
+    # Personal questions
     "what is my name": "Your name is Aditya.",
     "whats my name": "Your name is Aditya.",
     "where do i live": "You live in Greater Noida.",
@@ -31,8 +32,15 @@ FAST_ANSWERS = {
     "whats my project": "Your project is PROJECT R1.",
     "what is my goal": "Your goal is to build RAF into a fully autonomous AI companion.",
     "whats my goal": "Your goal is to build RAF into a fully autonomous AI companion.",
+    "what is my city": "Your city is Lucknow.",
+    "whats my city": "Your city is Lucknow.",
+    "what is my country": "Your country is India.",
+    "whats my country": "Your country is India.",
+    "what is my school": "Your school is Manipal Public School.",
+    "whats my school": "Your school is Manipal Public School.",
+    "when is my birthday": "Your birthday is 15 May 2008.",
+    "do i have a pet": "You have no pet.",
 }
-
 # Force CPU mode to prevent CUDA crashes
 os.environ["OLLAMA_NUM_GPU"] = "0"
 

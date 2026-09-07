@@ -56,7 +56,8 @@ from modules.language.language import (
     get_remember_command,
     get_recall_command,
     get_mood_command,
-    get_last_message_command
+    get_last_message_command,
+    get_personal_lookup
 )
 
 # =========================
@@ -83,13 +84,7 @@ def process_command(command):
     add_message("user", command)
 
     # =========================
-    # Intelligence Router
-    # =========================
-    router = IntentRouter()
-    route = router.route(command)
-
-    # =========================
-    # FAST COMMANDS — bypass LLM
+    # FAST COMMANDS — bypass LLM (MUST BE FIRST)
     # =========================
     
     # Mode switching
@@ -130,18 +125,46 @@ def process_command(command):
         return
 
     # =========================
+    # "Did you mean?" Auto-correct — MUST RUN BEFORE ROUTER
+    # =========================
+
+    from modules.language.suggestions import suggest_correction
+    suggestion = suggest_correction(command)
+    if suggestion:
+        print(f"🔧 Auto-corrected to: '{suggestion}'")
+        command = suggestion
+
+    # =========================
+    # Intelligence Router
+    # =========================
+    router = IntentRouter()
+    route = router.route(command)
+
+    # =========================
     # Route by Intent
     # =========================
     if route["intent"] == "fast_answer":
+        ...
+
         from modules.llm.llm import FAST_ANSWERS
-        for key in FAST_ANSWERS:
-            if key in command:
-                answer = FAST_ANSWERS[key]
-                print("RAF:", answer)
-                add_message("assistant", answer)
-                if VOICE_ENABLED:
-                    speak(answer)
-                return
+        # Use the key from the route directly
+        key = route.get("key")
+        if key and key in FAST_ANSWERS:
+            answer = FAST_ANSWERS[key]
+            print("RAF:", answer)
+            add_message("assistant", answer)
+            if VOICE_ENABLED:
+                speak(answer)
+        else:
+            # Fallback: loop through all keys
+            for k, v in FAST_ANSWERS.items():
+                if k in command:
+                    print("RAF:", v)
+                    add_message("assistant", v)
+                    if VOICE_ENABLED:
+                        speak(v)
+                    return
+        return
 
     elif route["intent"] == "multi_part":
         parts = command.split(" and ")
@@ -150,7 +173,6 @@ def process_command(command):
         from modules.memory.memory import recall
         for part in parts:
             part = part.strip()
-            # Check fast answers
             found = False
             for key in FAST_ANSWERS:
                 if key in part:
@@ -158,7 +180,6 @@ def process_command(command):
                     found = True
                     break
             if not found:
-                # Check memory
                 from modules.language.language import get_recall_command
                 recall_result = get_recall_command(part)
                 if recall_result:
@@ -177,8 +198,31 @@ def process_command(command):
             speak(combined)
         return
 
+    elif route["intent"] == "personal_lookup":
+        from modules.memory.memory import recall
+        key = route["key"]
+        value = recall(key)
+        if value:
+            display_key = key.replace("_", " ").strip()
+            if display_key.startswith("my "):
+                display_key = display_key[3:]
+            response = f"Your {display_key} is {value}."
+            print("RAF:", response)
+            add_message("assistant", response)
+            if VOICE_ENABLED:
+                speak(response)
+        else:
+            display_key = key.replace("_", " ").strip()
+            if display_key.startswith("my "):
+                display_key = display_key[3:]
+            response = f"I don't remember your {display_key} yet."
+            print("RAF:", response)
+            add_message("assistant", response)
+            if VOICE_ENABLED:
+                speak(response)
+        return
+
     elif route["intent"] == "command":
-        # Commands are handled by the existing handlers in brain.py
         pass
 
     elif route["intent"] == "greeting":
@@ -249,7 +293,6 @@ def process_command(command):
         return
 
     elif route["intent"] == "emotion":
-        from core.handlers.emotion_handler import handle_emotion
         handle_emotion(route["emotion"])
         return
 
@@ -433,7 +476,7 @@ def process_command(command):
         if daily:
             print("\nDaily Journal:")
             for day, item in daily:
-                print(f"[{day}] {item}")
+                print(f"[{day}] {item}")  
         return
 
     # =========================
@@ -492,7 +535,6 @@ def process_command(command):
     if suggestion:
         print(f"🔧 Auto-corrected to: '{suggestion}'")
         command = suggestion
-        # Fall through to the rest of the function
 
     # =========================
     # Unknown

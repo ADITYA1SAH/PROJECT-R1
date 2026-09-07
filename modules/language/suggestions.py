@@ -19,6 +19,11 @@ COMMON_PHRASES = [
     "remember my name is",
     "where do I live",
     "what is my favorite color",
+    "what is my school",      # <-- ADD THIS
+    "when is my birthday",    # <-- ADD THIS
+    "do i have a pet",        # <-- ADD THIS
+    "what is my city",        # <-- ADD THIS
+    "what is my country",     # <-- ADD THIS
 ]
 
 def suggest_correction(query):

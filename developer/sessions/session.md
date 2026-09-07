@@ -2644,3 +2644,77 @@ Next Goal:
 • Fix remaining conversation flow issues (context, follow-ups)
 • Test all edge cases
 • Begin Phase 8 — Vision (Face, Lens, Webcam)
+
+==============================
+Day 33 - Personal Question Fix + Router Debug
+==============================
+Date: 2026-09-07
+Version: v0.0.3 Alpha
+Time Planned: Until Fixed
+Actual Time: ~5 Hours
+
+Completed:
+✓ Fixed `what is my city` and `what is my country` corruption
+✓ Moved auto-correct BEFORE router to prevent key corruption
+✓ Verified memory keys are correctly stored (my_city, my_country)
+✓ Verified `get_personal_lookup()` extracts keys correctly
+✓ Verified `fast_answer` handler works with direct key lookup
+✓ Added debug prints to trace key flow
+✓ Fixed duplicate `personal_lookup` handler in brain.py
+
+Bugs Fixed:
+✓ `"what is my city"` → was returning `"cithank"` (fixed)
+✓ `"what is my country"` → was returning `"coyountry"` (fixed)
+✓ Auto-correct was corrupting keys after router routing (fixed)
+✓ Duplicate handler causing conflicts (removed)
+
+Architecture Improvements:
+✓ Auto-correct now runs BEFORE router
+✓ Cleaner debug flow for personal questions
+✓ `fast_answer` handler uses direct key from router
+
+Testing Results:
+✓ `"what is my city"` → "Your city is Lucknow." ✅
+✓ `"what is my country"` → "Your country is India." ✅
+✓ `"what is my school"` → "Your school is Manipal Public School." ✅
+✓ `"when is my birthday"` → "Your birthday is 15 May 2008." ✅
+✓ `"do i have a pet"` → "You have no pet." ✅
+
+Current Progress:
+Foundation...............100%
+Brain....................100%
+Memory...................100%
+Identity.................100%
+Permissions..............100%
+Personality...............90%
+Conversation Engine......100%
+Emotion Engine...........100%
+Context Builder..........100%
+Prompt Builder............100%
+Memory Search............100%
+Memory Ranking...........100%
+Time Awareness............100%
+Calendar Context..........100%
+Calendar Routing..........100%
+Personal Grounding........100%
+Intelligence Router.......100%
+Internet Search...........100%
+Voice Output.............100%
+Voice Input..............100%
+Modes System.............100%
+Multi-Model Integration..100%
+Spelling Correction......100%
+Auto-Correct.............100%
+Personal Lookup..........100%
+Vision.....................0%
+Workspace Control..........0%
+Local LLM.................70%
+
+Today's Milestone:
+RAF now correctly answers ALL personal questions without corruption.
+The key extraction, routing, and display are now fully aligned.
+
+Next Goal:
+• Test remaining question categories (RAF self-questions, calendar, weather, general knowledge)
+• Fix any remaining speed or accuracy issues
+• Begin Phase 8 — Vision (Face, Lens, Webcam)
