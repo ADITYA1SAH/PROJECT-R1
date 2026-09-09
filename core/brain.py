@@ -128,6 +128,20 @@ def process_command(command):
     # "Did you mean?" Auto-correct — MUST RUN BEFORE ROUTER
     # =========================
 
+    print(f"🔍 BEFORE AUTO-CORRECT: command='{command}'")  # DEBUG
+
+    from modules.language.suggestions import suggest_correction
+    suggestion = suggest_correction(command)
+    if suggestion:
+        print(f"🔧 Auto-corrected to: '{suggestion}'")
+        command = suggestion
+
+    print(f"🔍 AFTER AUTO-CORRECT: command='{command}'")  # DEBUG
+
+    # =========================
+    # "Did you mean?" Auto-correct — MUST RUN BEFORE ROUTER
+    # =========================
+
     from modules.language.suggestions import suggest_correction
     suggestion = suggest_correction(command)
     if suggestion:
@@ -144,8 +158,6 @@ def process_command(command):
     # Route by Intent
     # =========================
     if route["intent"] == "fast_answer":
-        ...
-
         from modules.llm.llm import FAST_ANSWERS
         # Use the key from the route directly
         key = route.get("key")
@@ -476,7 +488,7 @@ def process_command(command):
         if daily:
             print("\nDaily Journal:")
             for day, item in daily:
-                print(f"[{day}] {item}")  
+                print(f"[{day}] {item}")
         return
 
     # =========================
@@ -525,16 +537,6 @@ def process_command(command):
 
     if handle_conversation(command):
         return
-
-    # =========================
-    # "Did you mean?" Auto-correct
-    # =========================
-
-    from modules.language.suggestions import suggest_correction
-    suggestion = suggest_correction(command)
-    if suggestion:
-        print(f"🔧 Auto-corrected to: '{suggestion}'")
-        command = suggestion
 
     # =========================
     # Unknown

@@ -1,15 +1,13 @@
 """
 "Did you mean?" suggestions for PROJECT R1
+Using TheFuzz for intelligent fuzzy matching
 """
 
-import difflib
+from thefuzz import process
 
-# Common commands and phrases
-COMMON_PHRASES = [
-    "what is my name",
-    "what is the weather",
+# Core commands and common phrases
+COMMAND_LIST = [
     "show memory",
-    "help",
     "version",
     "exit",
     "mode normal",
@@ -18,20 +16,42 @@ COMMON_PHRASES = [
     "mode emergency",
     "remember my name is",
     "where do I live",
-    "what is my favorite color",
-    "what is my school",      # <-- ADD THIS
-    "when is my birthday",    # <-- ADD THIS
-    "do i have a pet",        # <-- ADD THIS
-    "what is my city",        # <-- ADD THIS
-    "what is my country",     # <-- ADD THIS
+    "what is my school",
+    "when is my birthday",
+    "do i have a pet",
+    "what is my city",
+    "what is my country",
+    "what is the weather",
 ]
 
 def suggest_correction(query):
     """
-    Return the closest matching command or phrase.
+    Return the closest matching command or phrase using TheFuzz.
     """
     query = query.lower().strip()
-    matches = difflib.get_close_matches(query, COMMON_PHRASES, n=1, cutoff=0.6)
-    if matches:
-        return matches[0]
+    
+    # Skip correction for these common questions
+    skip_phrases = [
+        "what is gravity",
+        "what is the capital",
+        "who is",
+        "what are you",
+        "how are you",
+        "who are you",
+        "what can you do",
+        "who created you",
+        "what is your name",
+        "wat",
+        "hello",
+        "hi",
+        "hey",
+    ]
+    for phrase in skip_phrases:
+        if phrase in query:
+            return None
+    
+    # Use TheFuzz to find the best match
+    result = process.extractOne(query, COMMAND_LIST, score_cutoff=80)
+    if result:
+        return result[0]  # Return the matched phrase
     return None

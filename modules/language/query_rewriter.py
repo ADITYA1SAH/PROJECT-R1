@@ -43,9 +43,9 @@ def rewrite_query(query):
     """
     query = query.lower().strip()
     
-    # Fix common typos
+    # Fix common typos (whole word only)
     for wrong, correct in TYPO_MAP.items():
-        query = query.replace(wrong, correct)
+        query = re.sub(r'\b' + re.escape(wrong) + r'\b', correct, query)
     
     # Expand common abbreviations
     query = query.replace("whats", "what is")

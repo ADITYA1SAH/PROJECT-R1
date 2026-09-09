@@ -94,6 +94,9 @@ class IntentRouter:
         return command.startswith(prefixes)
 
     def _is_calendar(self, command):
+        # Skip general "what is" questions
+        if command.startswith("what is the"):
+            return False
         return is_calendar_question(command)
 
     def _is_self_question(self, command):

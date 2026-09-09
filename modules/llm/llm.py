@@ -14,6 +14,7 @@ FAST_ANSWERS = {
     "what are you": "I'm an AI companion named RAF, built to be your friend and assistant.",
     "who created you": "I was created by Aditya, a brilliant developer with a vision.",
     "what can you do": "I can remember facts, search the internet, answer questions, and have conversations with you.",
+    "are you connected to the internet": "Yes, I can search the internet when you ask me to.",
     
     # Personal questions
     "what is my name": "Your name is Aditya.",
@@ -41,6 +42,7 @@ FAST_ANSWERS = {
     "when is my birthday": "Your birthday is 15 May 2008.",
     "do i have a pet": "You have no pet.",
 }
+
 # Force CPU mode to prevent CUDA crashes
 os.environ["OLLAMA_NUM_GPU"] = "0"
 
@@ -48,7 +50,7 @@ OLLAMA_URL = "http://localhost:11434/api/generate"
 
 # Model mapping for each mode
 MODEL_MAP = {
-    "normal": "hf.co/jeiku/Luna_7B_GGUF:Q4_K_S",
+    "normal": "phi3:3.8b-mini-4k-instruct-q5_K_M",  # Fast
     "professional": "deepseek-coder:6.7b",
     "idle": "phi3:3.8b-mini-4k-instruct-q5_K_M",
     "emergency": "phi3:3.8b-mini-4k-instruct-q5_K_M"
@@ -93,11 +95,14 @@ def generate_response(prompt, timeout=30, user_message=None):
     # Check cache against the actual user message (if provided)
     if user_message:
         msg_lower = user_message.lower().strip()
+        # Check exact match first
+        if msg_lower in FAST_ANSWERS:
+            return FAST_ANSWERS[msg_lower]
+        # Then check partial match
         for key, answer in FAST_ANSWERS.items():
             if key in msg_lower:
                 return answer
     else:
-        # Fallback: check the prompt
         prompt_lower = prompt.lower().strip()
         for key, answer in FAST_ANSWERS.items():
             if key in prompt_lower:
@@ -121,7 +126,7 @@ def generate_response(prompt, timeout=30, user_message=None):
                 "think": False,
                 "options": {
                     "num_gpu": 0,
-                    "num_ctx": 1024  # Reduced from 2048 to save memory
+                    "num_ctx": 512
                 }
             },
             timeout=timeout
