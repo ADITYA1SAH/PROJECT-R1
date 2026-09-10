@@ -68,7 +68,7 @@ from core.handlers.version_handler import handle_version
 from config import USE_LLM
 from config import VOICE_ENABLED
 from modules.voice.voice import speak
-from modules.llm.llm import generate_response, FAST_ANSWERS
+from modules.llm.llm import generate_response, RAF_SELF_ANSWERS
 from modules.prompting.prompt_builder import build_prompt
 from modules.conversation.context import (
     add_message,
@@ -158,37 +158,35 @@ def process_command(command):
     # Route by Intent
     # =========================
     if route["intent"] == "fast_answer":
-        from modules.llm.llm import FAST_ANSWERS
-        # Use the key from the route directly
+        from modules.llm.llm import RAF_SELF_ANSWERS
         key = route.get("key")
-        if key and key in FAST_ANSWERS:
-            answer = FAST_ANSWERS[key]
+        answer = None
+        if key and key in RAF_SELF_ANSWERS:
+            answer = RAF_SELF_ANSWERS[key]
+        else:
+            # Fallback: loop through all keys
+            for k, v in RAF_SELF_ANSWERS.items():
+                if k in command:
+                    answer = v
+                    break
+        if answer:
             print("RAF:", answer)
             add_message("assistant", answer)
             if VOICE_ENABLED:
                 speak(answer)
-        else:
-            # Fallback: loop through all keys
-            for k, v in FAST_ANSWERS.items():
-                if k in command:
-                    print("RAF:", v)
-                    add_message("assistant", v)
-                    if VOICE_ENABLED:
-                        speak(v)
-                    return
         return
 
     elif route["intent"] == "multi_part":
         parts = command.split(" and ")
         responses = []
-        from modules.llm.llm import FAST_ANSWERS
+        from modules.llm.llm import RAF_SELF_ANSWERS
         from modules.memory.memory import recall
         for part in parts:
             part = part.strip()
             found = False
-            for key in FAST_ANSWERS:
+            for key in RAF_SELF_ANSWERS:
                 if key in part:
-                    responses.append(FAST_ANSWERS[key])
+                    responses.append(RAF_SELF_ANSWERS[key])
                     found = True
                     break
             if not found:

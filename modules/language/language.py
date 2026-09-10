@@ -78,18 +78,21 @@ def get_recall_command(command):
 
 
 def get_personal_lookup(command):
-    """
-    Extract the key from "what is my X" and return it.
-    Example: "what is my country" → "my_country"
-    """
     command = command.lower().strip()
+    
     if not command.startswith(("what is my ", "what's my ", "where is my ", "when is my ", "do i have a ")):
         return None
+    
     for prefix in ["what is my ", "what's my ", "where is my ", "when is my ", "do i have a "]:
         if command.startswith(prefix):
             key = command.replace(prefix, "").strip()
             key = re.sub(r'[^\w\s]', '', key)
             key = key.replace(" ", "_")
+            
+            # Special case: "name" should map to "name" (not "my_name")
+            if key == "name":
+                return "name"
+            
             if not key.startswith("my_"):
                 key = f"my_{key}"
             return key

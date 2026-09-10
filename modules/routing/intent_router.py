@@ -1,13 +1,52 @@
 """
 Intelligence Router for PROJECT R1
-Phase 4.8 — Replaces the giant if/elif chain in brain.py
+Uses GLiClass for automatic intent classification
+No hardcoded word lists — fully automatic
 """
+
+import os
+os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
+os.environ["TRANSFORMERS_VERBOSITY"] = "error"
 
 from modules.grounding.grounding import is_personal_question, grounding_response
 from modules.calendar.calendar import is_calendar_question
 from modules.emotion.emotion import detect_emotion
 from config import INTERNET_ENABLED
 from modules.internet.search import is_available
+
+# =========================
+# GLiClass Setup
+# =========================
+try:
+    from gliclass import GLiClassModel, ZeroShotClassificationPipeline
+    from transformers import AutoTokenizer
+    import torch
+    
+    _model = GLiClassModel.from_pretrained("knowledgator/gliclass-edge-v3.0")
+    _tokenizer = AutoTokenizer.from_pretrained("knowledgator/gliclass-edge-v3.0")
+    _pipeline = ZeroShotClassificationPipeline(
+        _model, _tokenizer,
+        classification_type='multi-label',
+        device='cuda:0' if torch.cuda.is_available() else 'cpu'
+    )
+    GLICLASS_AVAILABLE = True
+    print("✅ GLiClass loaded — automatic intent classification ready")
+except Exception as e:
+    GLICLASS_AVAILABLE = False
+    print(f"⚠️ GLiClass not available: {e}")
+    print("⚠️ Falling back to manual routing")
+
+# Intent labels
+INTENT_LABELS = [
+    "greeting",
+    "personal_question",
+    "self_question",
+    "weather_query",
+    "calendar_query",
+    "command",
+    "general_knowledge",
+    "conversation"
+]
 
 
 class IntentRouter:
@@ -20,11 +59,24 @@ class IntentRouter:
         # =========================
         # FAST ANSWERS — bypass everything (INSTANT)
         # =========================
-        from modules.llm.llm import FAST_ANSWERS
-        # Check for exact match or partial match
-        for key in FAST_ANSWERS:
+        from modules.llm.llm import RAF_SELF_ANSWERS
+        for key in RAF_SELF_ANSWERS:
             if key in command_lower or command_lower in key:
                 return {"intent": "fast_answer", "key": key}
+
+        # =========================
+        # EXPLICIT SEARCH TRIGGERS (HIGHEST PRIORITY)
+        # =========================
+        search_triggers = [
+            "weather", "temperature", "prime minister", "capital of",
+            "president", "who is", "what is", "when is", "where is",
+            "how many", "tell me about", "explain",
+        ]
+        if INTERNET_ENABLED and is_available():
+            for trigger in search_triggers:
+                if trigger in command_lower:
+                    if not is_personal_question(command):
+                        return {"intent": "search"}
 
         # =========================
         # MULTI-PART QUESTIONS
@@ -40,93 +92,72 @@ class IntentRouter:
         if lookup_result:
             return {"intent": "personal_lookup", "key": lookup_result}
 
-        # 1. Greetings
-        if self._is_greeting(command_lower):
-            return {"intent": "greeting"}
-
-        # 2. Commands
-        if self._is_command(command_lower):
-            return {"intent": "command"}
-
-        # 3. Memory statements ("I am in X", "my X is Y", "remember X = Y")
+        # =========================
+        # MEMORY STATEMENTS
+        # =========================
         from modules.language.language import get_memory_statement, get_remember_command
         if get_memory_statement(command) or get_remember_command(command):
             return {"intent": "memory"}
 
-        # 4. Recall questions ("what is my name", "where do I live")
+        # =========================
+        # RECALL QUESTIONS
+        # =========================
         from modules.language.language import get_recall_command
         if get_recall_command(command):
             return {"intent": "recall"}
 
-        # 5. Personal questions (like "are you connected to the internet")
-        if self._is_self_question(command_lower):
-            return {"intent": "self_question"}
+        # =========================
+        # GLICLASS INTENT CLASSIFICATION (automatic)
+        # =========================
+        if GLICLASS_AVAILABLE:
+            try:
+                results = _pipeline(command, INTENT_LABELS, threshold=0.8)[0]
+                if results:
+                    best = max(results, key=lambda x: x["score"])
+                    
+                    if best["score"] < 0.8:
+                        if INTERNET_ENABLED and is_available():
+                            return {"intent": "search"}
+                        return {"intent": "conversation"}
+                    
+                    label = best["label"]
+                    
+                    if label == "greeting":
+                        return {"intent": "greeting"}
+                    elif label == "personal_question":
+                        return {"intent": "personal_lookup"}
+                    elif label == "self_question":
+                        return {"intent": "self_question"}
+                    elif label == "weather_query":
+                        return {"intent": "search"}
+                    elif label == "calendar_query":
+                        return {"intent": "calendar"}
+                    elif label == "command":
+                        return {"intent": "command"}
+                    elif label == "general_knowledge":
+                        if INTERNET_ENABLED and is_available():
+                            return {"intent": "search"}
+                        return {"intent": "conversation"}
+                    elif label == "conversation":
+                        return {"intent": "conversation"}
+            except Exception as e:
+                if self.debug:
+                    print(f"GLiClass error: {e}")
 
-        # 6. Calendar questions
+        # =========================
+        # FALLBACK — if GLiClass fails
+        # =========================
+        if command_lower in ["hi", "hello", "hey", "good morning", "good afternoon", "good evening", "good night"]:
+            return {"intent": "greeting"}
+
         if self._is_calendar(command_lower):
             return {"intent": "calendar"}
 
-        # 7. Internet search (if enabled)
-        if INTERNET_ENABLED and is_available():
-            if self._is_searchable(command_lower):
-                return {"intent": "search"}
-
-        # 8. Emotion (only after everything else)
         emotion = detect_emotion(command)
         if emotion != "neutral":
             return {"intent": "emotion", "emotion": emotion}
 
-        # 9. Fallback: general conversation
         return {"intent": "conversation"}
 
-    def _is_greeting(self, command):
-        greetings = ["hi", "hello", "hey", "good morning", "good afternoon", "good evening", "good night"]
-        return command in greetings
-
-    def _is_command(self, command):
-        prefixes = (
-            "show ", "find ", "remember ", "forget ",
-            "be ", "what is", "what did",
-            "owner", "friend", "guest", "version",
-            "show session", "show experiences",
-            "show today", "show yesterday"
-        )
-        return command.startswith(prefixes)
-
     def _is_calendar(self, command):
-        # Skip general "what is" questions
-        if command.startswith("what is the"):
-            return False
         return is_calendar_question(command)
-
-    def _is_self_question(self, command):
-        """Check if the question is about RAF itself."""
-        self_phrases = [
-            "are you connected to the internet",
-            "are you online",
-            "do you have internet",
-            "can you search the web",
-            "are you connected",
-            "what is your name",
-            "who are you",
-            "what are you"
-        ]
-        return any(phrase in command for phrase in self_phrases)
-
-    def _is_searchable(self, command):
-        searchable_phrases = [
-            "weather",
-            "temperature",
-            "news",
-            "who is",
-            "what is",
-            "when did",
-            "how to",
-            "tell me about",
-            "current",
-            "today",
-            "diwali",
-            "holiday",
-            "festival"
-        ]
-        return any(phrase in command for phrase in searchable_phrases)

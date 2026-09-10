@@ -2792,3 +2792,97 @@ Next Goal:
 • Build automatic system for general knowledge (not hardcoded)
 • Optimise LLM speed (reduce num_ctx, use Phi for Normal mode)
 • Begin Phase 8 — Vision (Face, Lens, Webcam)
+
+==============================
+Day 35 - Automatic Search + GLiClass Integration
+==============================
+Date: 2026-09-10
+Version: v0.0.3 Alpha
+Time Planned: ~4 Hours
+Actual Time: ~5 Hours
+
+Completed:
+✓ Installed GLiClass + transformers + torch for automatic intent classification
+✓ Replaced hardcoded intent routing with GLiClass zero-shot classification
+✓ Added explicit search triggers before GLiClass (weather, prime minister, capital, etc.)
+✓ Removed hardcoded FAST_ANSWERS, kept only RAF_SELF_ANSWERS (static)
+✓ Personal questions now answered from memory (automatic)
+✓ Replaced difflib with TheFuzz for auto-correct (95% cutoff)
+✓ Removed hardcoded COMMAND_LIST from suggestions.py (only commands remain)
+✓ Fixed contraction expansion using contractions library (automatic)
+✓ Added direct Wikipedia API infobox parsing (no wptools needed)
+✓ Fixed weather city extraction (Noida now works)
+✓ Added SerpApi integration attempt (reverted to Wikipedia)
+✓ Removed calendar obsession from prompt_builder.py
+✓ Calendar context now only injected when relevant
+
+Bugs Fixed:
+✓ who are you, how are you, what are you → instant (cache)
+✓ whats my name → memory lookup works
+✓ what is the capital of France → "Paris" (infobox)
+✓ whats the weather in noida → city extraction works
+✓ hell, hey, hi → greetings work
+✓ whos the prime minister → search triggered (LLM phrasing still needs fix)
+✓ dont forget → no longer hallucinates calendar
+
+Architecture Improvements:
+✓ GLiClass replaces hardcoded intent routing
+✓ TheFuzz replaces difflib (95% cutoff, no false positives)
+✓ contractions library replaces hardcoded contraction maps
+✓ Direct Wikipedia API replaces wptools (DNS errors fixed)
+✓ Infobox parsing extracts current PM, capital, etc.
+✓ Prompt Builder no longer injects calendar context unnecessarily
+
+Testing Results:
+✓ who are you → Instant ✅
+✓ how are you → Instant ✅
+✓ what is my name → Memory ✅
+✓ what is the capital of France → Paris ✅
+✓ hello/hi/hey → Greeting ✅
+✓ whats the weather in noida → Noida weather ✅
+⚠️ who is the prime minister of india → Search returns "Narendra Modi" but LLM adds unwanted context
+
+Current Progress:
+Foundation...............100%
+Brain....................100%
+Memory...................100%
+Identity.................100%
+Permissions..............100%
+Personality...............90%
+Conversation Engine......100%
+Emotion Engine...........100%
+Context Builder..........100%
+Prompt Builder............95%
+Memory Search............100%
+Memory Ranking...........100%
+Time Awareness............100%
+Calendar Context..........100%
+Calendar Routing..........100%
+Personal Grounding........100%
+Intelligence Router.......100%
+Internet Search...........90%
+Voice Output.............100%
+Voice Input..............100%
+Modes System.............100%
+Multi-Model Integration..100%
+GLiClass Router..........100%
+Automatic Search.........90%
+Vision.....................0%
+Workspace Control..........0%
+Local LLM.................70%
+
+Today's Milestone:
+RAF now has:
+• Automatic intent classification (GLiClass)
+• Automatic contraction expansion (contractions)
+• Automatic spelling correction (PyEnchant)
+• Automatic fuzzy matching (TheFuzz)
+• Automatic infobox parsing (Wikipedia API)
+• No more hardcoded personal questions
+• No more calendar obsession in prompts
+
+Next Goal:
+• Fix PM answer — LLM is adding "As Aditya, I don't have personal memories..." 
+• Skip LLM for search results (return search answer directly)
+• Continue testing remaining categories (calendar, general knowledge)
+• Begin Phase 8 — Vision (Face, Lens, Webcam)

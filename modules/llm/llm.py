@@ -4,9 +4,8 @@ import os
 import time
 from modules.modes.mode import get_mode_config
 
-# Cache for common questions — instant answers
-FAST_ANSWERS = {
-    # RAF self-questions
+# Cache for RAF self-questions (static, never change)
+RAF_SELF_ANSWERS = {
     "what is your name": "My name is RAF — Revolutionary Artificial Friend.",
     "who are you": "I'm RAF, your revolutionary artificial friend. I'm here to help.",
     "how are you": "I'm doing great! How can I help you?",
@@ -15,32 +14,6 @@ FAST_ANSWERS = {
     "who created you": "I was created by Aditya, a brilliant developer with a vision.",
     "what can you do": "I can remember facts, search the internet, answer questions, and have conversations with you.",
     "are you connected to the internet": "Yes, I can search the internet when you ask me to.",
-    
-    # Personal questions
-    "what is my name": "Your name is Aditya.",
-    "whats my name": "Your name is Aditya.",
-    "where do i live": "You live in Greater Noida.",
-    "where am i": "You are in Greater Noida.",
-    "what is my favorite color": "Your favorite color is blue.",
-    "whats my favorite color": "Your favorite color is blue.",
-    "what is my favourite color": "Your favorite color is blue.",
-    "whats my favourite color": "Your favorite color is blue.",
-    "what is my age": "You are 18 years old.",
-    "how old am i": "You are 18 years old.",
-    "what is my hobby": "Your hobby is robotics.",
-    "whats my hobby": "Your hobby is robotics.",
-    "what is my project": "Your project is PROJECT R1.",
-    "whats my project": "Your project is PROJECT R1.",
-    "what is my goal": "Your goal is to build RAF into a fully autonomous AI companion.",
-    "whats my goal": "Your goal is to build RAF into a fully autonomous AI companion.",
-    "what is my city": "Your city is Lucknow.",
-    "whats my city": "Your city is Lucknow.",
-    "what is my country": "Your country is India.",
-    "whats my country": "Your country is India.",
-    "what is my school": "Your school is Manipal Public School.",
-    "whats my school": "Your school is Manipal Public School.",
-    "when is my birthday": "Your birthday is 15 May 2008.",
-    "do i have a pet": "You have no pet.",
 }
 
 # Force CPU mode to prevent CUDA crashes
@@ -50,7 +23,7 @@ OLLAMA_URL = "http://localhost:11434/api/generate"
 
 # Model mapping for each mode
 MODEL_MAP = {
-    "normal": "phi3:3.8b-mini-4k-instruct-q5_K_M",  # Fast
+    "normal": "phi3:3.8b-mini-4k-instruct-q5_K_M",
     "professional": "deepseek-coder:6.7b",
     "idle": "phi3:3.8b-mini-4k-instruct-q5_K_M",
     "emergency": "phi3:3.8b-mini-4k-instruct-q5_K_M"
@@ -90,21 +63,17 @@ def get_model_for_mode():
 def generate_response(prompt, timeout=30, user_message=None):
     """
     Generate a response from the LLM.
-    Uses cache for common questions.
+    Uses RAF_SELF_ANSWERS for self-questions and memory for personal questions.
     """
-    # Check cache against the actual user message (if provided)
+    # Check RAF self-questions cache
     if user_message:
         msg_lower = user_message.lower().strip()
-        # Check exact match first
-        if msg_lower in FAST_ANSWERS:
-            return FAST_ANSWERS[msg_lower]
-        # Then check partial match
-        for key, answer in FAST_ANSWERS.items():
+        for key, answer in RAF_SELF_ANSWERS.items():
             if key in msg_lower:
                 return answer
     else:
         prompt_lower = prompt.lower().strip()
-        for key, answer in FAST_ANSWERS.items():
+        for key, answer in RAF_SELF_ANSWERS.items():
             if key in prompt_lower:
                 return answer
     

@@ -5,6 +5,7 @@ Phase 5 — Web search capability
 
 import requests
 import json
+import re
 from modules.llm.llm import generate_response
 from modules.internet.browser_search import search_duckduckgo
 
@@ -17,7 +18,6 @@ try:
 except ImportError:
     DICT_AVAILABLE = False
     print("⚠️ PyEnchant not installed. Install with: pip install pyenchant")
-    # Fallback to pyspellchecker
     try:
         from spellchecker import SpellChecker
         spell = SpellChecker()
@@ -30,7 +30,7 @@ except ImportError:
 # Simple cache to avoid repeated searches
 _search_cache = {}
 
-# We'll use DuckDuckGo's API (free, no API key required)
+# DuckDuckGo's API (free, no API key required)
 SEARCH_URL = "https://api.duckduckgo.com/"
 
 
@@ -38,11 +38,9 @@ def get_weather(city):
     """Get current weather using wttr.in (free, no API key) — short format."""
     try:
         city = city.strip().replace(" ", "%20")
-        # Use short format: condition + temperature only
         url = f"https://wttr.in/{city}?format=%C+%t"
         response = requests.get(url, timeout=5)
         if response.status_code == 200:
-            # Return short weather string (no extra commentary)
             return f"Weather in {city.replace('%20', ' ')}: {response.text.strip()}."
         return None
     except:
@@ -50,30 +48,24 @@ def get_weather(city):
 
 
 def correct_spelling(query):
-    """
-    Correct spelling errors using PyEnchant (real dictionary).
-    Falls back to pyspellchecker if not available.
-    """
-    # If using PyEnchant
+    """Correct spelling errors using PyEnchant (real dictionary)."""
     if DICT_AVAILABLE:
         words = query.split()
         corrected = []
         for word in words:
-            # Only correct words > 2 characters
             if len(word) > 2:
                 if ENGLISH_DICT.check(word):
                     corrected.append(word)
                 else:
                     suggestions = ENGLISH_DICT.suggest(word)
                     if suggestions:
-                        corrected.append(suggestions[0])  # Take the best suggestion
+                        corrected.append(suggestions[0])
                     else:
-                        corrected.append(word)  # Keep original if no suggestion
+                        corrected.append(word)
             else:
                 corrected.append(word)
         return " ".join(corrected)
     
-    # Fallback to pyspellchecker
     elif SPELL_CHECK_AVAILABLE:
         words = query.split()
         corrected = []
@@ -91,15 +83,82 @@ def correct_spelling(query):
                 corrected.append(word)
         return " ".join(corrected)
     
-    # No spellchecker available
     return query
 
 
+def search_wikipedia_infobox(query):
+    """
+    Use Wikipedia API directly to extract infobox data.
+    No wptools needed.
+    """
+    try:
+        # Clean the query — remove question words
+        clean_query = query.lower()
+        for word in ["who is the", "what is the", "where is the", "who is", "what is", "where is", "the"]:
+            clean_query = clean_query.replace(word, "")
+        clean_query = clean_query.strip()
+        
+        # Step 1: Search Wikipedia for the best matching page
+        search_url = "https://en.wikipedia.org/w/api.php"
+        params = {
+            "action": "query",
+            "list": "search",
+            "srsearch": clean_query,
+            "format": "json",
+            "srlimit": 1
+        }
+        response = requests.get(search_url, params=params, timeout=10)
+        data = response.json()
+        
+        search_results = data.get("query", {}).get("search", [])
+        if not search_results:
+            return None
+        
+        page_title = search_results[0]["title"]
+        
+        # Step 2: Get the raw wikitext
+        params = {
+            "action": "parse",
+            "page": page_title,
+            "prop": "wikitext",
+            "format": "json"
+        }
+        response = requests.get(search_url, params=params, timeout=10)
+        data = response.json()
+        
+        if "parse" not in data:
+            return None
+        
+        wikitext = data["parse"]["wikitext"]["*"]
+        
+        # Step 3: Extract the incumbent/current field from infobox
+        # Look for "incumbent" field
+        match = re.search(r'incumbent\s*=\s*\[?\[?([^\|\]\n]+)', wikitext, re.IGNORECASE)
+        if match:
+            result = match.group(1).strip()
+            # Clean up wiki links
+            result = re.sub(r'\[\[([^\|\]]+)\|?[^\]]*\]\]', r'\1', result)
+            result = re.sub(r'\[\[([^\]]+)\]\]', r'\1', result)
+            result = result.strip()
+            if result:
+                return result
+        
+        # Look for "current" field
+        match = re.search(r'current\s*=\s*\[?\[?([^\|\]\n]+)', wikitext, re.IGNORECASE)
+        if match:
+            result = match.group(1).strip()
+            result = re.sub(r'\[\[([^\|\]]+)\|?[^\]]*\]\]', r'\1', result)
+            result = result.strip()
+            if result:
+                return result
+        
+        return None
+    except Exception as e:
+        return None
+
+
 def search(query):
-    """
-    Search the web using DuckDuckGo API.
-    Returns a short, direct answer.
-    """
+    """Search the web and return a short, direct answer."""
     # Check cache first
     if query in _search_cache:
         return _search_cache[query]
@@ -107,10 +166,16 @@ def search(query):
     # Correct spelling before searching
     query = correct_spelling(query)
 
-    # If it's a weather query, use the weather API (short format)
+    # =========================
+    # WEATHER QUERIES
+    # =========================
     if "weather" in query.lower() or "temperature" in query.lower():
-        # Extract city name
-        city = query.lower().replace("weather", "").replace("temperature", "").replace("in", "").replace("what is the", "").replace("?", "").strip()
+        city = query.lower()
+        for word in ["what is the", "what's the", "whats the", "what is", "whats", "what's"]:
+            city = city.replace(word, "")
+        for word in ["weather", "temperature", "in", "of", "for", "?"]:
+            city = city.replace(word, " ")
+        city = " ".join(city.split()).strip()
         if not city:
             city = "London"
         result = get_weather(city)
@@ -121,18 +186,41 @@ def search(query):
             _search_cache[query] = "I couldn't get the weather for that location."
             return _search_cache[query]
 
-    # For calendar/festival queries, use DuckDuckGo HTML (no blocking)
+    # =========================
+    # FACTUAL QUERIES — Try Infobox first
+    # =========================
+    factual_keywords = ["prime minister", "president", "capital", "current", "incumbent", "chief minister"]
+    if any(keyword in query.lower() for keyword in factual_keywords):
+        infobox_result = search_wikipedia_infobox(query)
+        if infobox_result:
+            _search_cache[query] = infobox_result
+            return infobox_result
+
+    # =========================
+    # CALENDAR / FESTIVAL QUERIES
+    # =========================
     if any(keyword in query.lower() for keyword in ["diwali", "holiday", "festival", "when is", "date of"]):
         result = search_duckduckgo(query)
         _search_cache[query] = result
         return result
 
+    # =========================
+    # GENERAL KNOWLEDGE — DuckDuckGo HTML first
+    # =========================
+    try:
+        result = search_duckduckgo(query)
+        if result and "No results found" not in result and "Search error" not in result:
+            _search_cache[query] = result
+            return result
+    except Exception:
+        pass
+
+    # Fallback to DuckDuckGo API
     try:
         headers = {
             "User-Agent": "PROJECT R1/1.0 (https://github.com/your-repo; aditya@example.com)"
         }
 
-        # First try DuckDuckGo
         params = {
             "q": query,
             "format": "json",
@@ -142,12 +230,11 @@ def search(query):
         response = requests.get(SEARCH_URL, headers=headers, params=params, timeout=5)
         data = response.json()
 
-        # Extract the answer or summary
         raw_result = None
-        if data.get("Abstract"):
-            raw_result = data["Abstract"]
-        elif data.get("Answer"):
+        if data.get("Answer"):
             raw_result = data["Answer"]
+        elif data.get("Abstract"):
+            raw_result = data["Abstract"]
         elif data.get("Definition"):
             raw_result = data["Definition"]
         elif data.get("RelatedTopics"):
@@ -156,18 +243,17 @@ def search(query):
                     raw_result = topic["Text"]
                     break
 
-        # If DuckDuckGo didn't give a clear answer, try Wikipedia
         if not raw_result:
             raw_result = search_wikipedia(query)
 
-        # If we got a result, return SHORT answer (first sentence only)
         if raw_result:
-            # Split by period and take the first sentence
+            if len(raw_result.split(".")) == 1:
+                _search_cache[query] = raw_result
+                return raw_result
             first_sentence = raw_result.split(".")[0] + "."
             _search_cache[query] = first_sentence
             return first_sentence
 
-        # If no search result, return a clear "I don't know"
         result = f"I searched for '{query}' but couldn't find a clear answer. Try rephrasing your question."
         _search_cache[query] = result
         return result
@@ -183,15 +269,12 @@ def search(query):
 
 
 def search_wikipedia(query):
-    """
-    Fallback search using Wikipedia search API.
-    """
+    """Fallback search using Wikipedia search API."""
     try:
         headers = {
             "User-Agent": "PROJECT R1/1.0 (https://github.com/your-repo; aditya@example.com)"
         }
 
-        # First, search for the best matching page
         search_url = "https://en.wikipedia.org/w/api.php"
         params = {
             "action": "query",
@@ -203,22 +286,18 @@ def search_wikipedia(query):
         response = requests.get(search_url, headers=headers, params=params, timeout=10)
         data = response.json()
 
-        # Get the first search result
         search_results = data.get("query", {}).get("search", [])
         if not search_results:
             return None
 
-        # Get the page title
         page_title = search_results[0]["title"]
 
-        # Now get the summary for that page
         summary_url = "https://en.wikipedia.org/api/rest_v1/page/summary/"
         response = requests.get(summary_url + page_title.replace(" ", "_"), headers=headers, timeout=10)
         if response.status_code == 200:
             data = response.json()
 
             if data.get("extract"):
-                # Return only the first sentence (short answer)
                 extract = data["extract"]
                 first_sentence = extract.split(".")[0] + "."
                 return first_sentence
@@ -238,3 +317,4 @@ def is_available():
         return response.status_code == 200
     except:
         return False
+    
