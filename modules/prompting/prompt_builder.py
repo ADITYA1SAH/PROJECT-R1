@@ -1,4 +1,5 @@
 from modules.memory.memory import find_relevant_memories
+from modules.memory.mem0_memory import search_memory
 from modules.conversation.context import get_recent_history
 from modules.time.time import (
     get_current_time,
@@ -14,7 +15,27 @@ from modules.modes.mode import get_mode_config
 
 def build_prompt(user_message):
 
+    # ==========================
+    # Memory Retrieval
+    # ==========================
+    
+    # Old memory system (flat JSON)
     memories = find_relevant_memories(user_message)
+    
+    # Mem0 semantic search
+    mem0_memories = []
+    try:
+        mem0_results = search_memory(user_message, user_id="aditya", limit=5)
+        if isinstance(mem0_results, dict):
+            results = mem0_results.get("results", [])
+        else:
+            results = mem0_results
+        for r in results:
+            if r.get("memory"):
+                mem0_memories.append(r["memory"])
+    except Exception:
+        pass
+    
     calendar_event = find_calendar_event_in_text(user_message)
 
     # ==========================
@@ -44,7 +65,6 @@ def build_prompt(user_message):
     # ==========================
 
     current_time = get_current_time()
-    calendar = get_calendar_context()
 
     time_text = f"""CURRENT TIME:
     - Date: {current_time["date"]}
@@ -67,20 +87,27 @@ MODE: {mode_config['name']}
 """
 
     # ==========================
-    # Known Memories
+    # Known Memories (Old + Mem0)
     # ==========================
 
     memory_text = ""
 
-    if memories:
+    if memories or mem0_memories:
 
         memory_text = "KNOWN FACTS ABOUT ADITYA:\n"
         memory_text += "These are verified memories. Treat them as factual.\n"
         memory_text += "Do not contradict them unless Aditya provides new information.\n\n"
 
-        for key, value in memories.items():
+        # Old memory system
+        if memories:
+            for key, value in memories.items():
+                memory_text += f"- {key}: {value}\n"
 
-            memory_text += f"- {key}: {value}\n"
+        # Mem0 semantic memories
+        if mem0_memories:
+            memory_text += "\nFROM CONVERSATION HISTORY:\n"
+            for mem in mem0_memories:
+                memory_text += f"- {mem}\n"
 
     # ==========================
     # Calendar Event Context (ONLY IF RELEVANT)

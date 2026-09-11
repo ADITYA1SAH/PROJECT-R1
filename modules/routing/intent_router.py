@@ -93,6 +93,18 @@ class IntentRouter:
             return {"intent": "personal_lookup", "key": lookup_result}
 
         # =========================
+        # MEMORY QUESTIONS (tell me about my X, remember X, etc.)
+        # =========================
+        memory_phrases = [
+            "tell me about my", "tell me about me", "what do you remember about",
+            "do you remember my", "do you remember when", "what do you know about me",
+            "tell me about my dad", "tell me about my mom", "tell me about my family",
+        ]
+        for phrase in memory_phrases:
+            if phrase in command_lower:
+                return {"intent": "memory_search"}
+
+        # =========================
         # MEMORY STATEMENTS
         # =========================
         from modules.language.language import get_memory_statement, get_remember_command

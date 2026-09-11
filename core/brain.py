@@ -61,6 +61,12 @@ from modules.language.language import (
 )
 
 # =========================
+# Mem0 — Permanent Memory
+# =========================
+
+from modules.memory.mem0_memory import add_memory, search_memory
+
+# =========================
 # Other Imports
 # =========================
 
@@ -77,6 +83,7 @@ from modules.conversation.context import (
 from modules.internet.search import search
 from modules.grounding.grounding import grounding_response
 from modules.routing.intent_router import IntentRouter
+from modules.memory.permanent_memory import add_permanent, get_family, get_identity
 
 
 def process_command(command):
@@ -109,6 +116,35 @@ def process_command(command):
             handle_show_memory()
         return
 
+    # Show family
+    if command == "show family":
+        from modules.memory.mem0_memory import search_memory
+        from modules.memory.permanent_memory import get_family
+        print()
+        print("========== Family Memories ==========")
+        # Permanent family memories
+        permanent = get_family()
+        if permanent:
+            print("\n📌 Permanent:")
+            for m in permanent:
+                print(f"  - {m['fact']}")
+        # Mem0 semantic search for family
+        try:
+            results = search_memory("family mom dad", user_id="aditya", limit=10)
+            if isinstance(results, dict):
+                results = results.get("results", [])
+            if results:
+                print("\n🧠 From Conversation:")
+                for r in results:
+                    if r.get("memory"):
+                        print(f"  - {r['memory']}")
+        except Exception:
+            pass
+        if not permanent and not results:
+            print("No family memories yet.")
+        print()
+        return
+
     # Version
     if command == "version":
         handle_version()
@@ -139,16 +175,6 @@ def process_command(command):
     print(f"🔍 AFTER AUTO-CORRECT: command='{command}'")  # DEBUG
 
     # =========================
-    # "Did you mean?" Auto-correct — MUST RUN BEFORE ROUTER
-    # =========================
-
-    from modules.language.suggestions import suggest_correction
-    suggestion = suggest_correction(command)
-    if suggestion:
-        print(f"🔧 Auto-corrected to: '{suggestion}'")
-        command = suggestion
-
-    # =========================
     # Intelligence Router
     # =========================
     router = IntentRouter()
@@ -164,7 +190,6 @@ def process_command(command):
         if key and key in RAF_SELF_ANSWERS:
             answer = RAF_SELF_ANSWERS[key]
         else:
-            # Fallback: loop through all keys
             for k, v in RAF_SELF_ANSWERS.items():
                 if k in command:
                     answer = v
@@ -174,6 +199,14 @@ def process_command(command):
             add_message("assistant", answer)
             if VOICE_ENABLED:
                 speak(answer)
+            # Add to Mem0
+            try:
+                add_memory([
+                    {"role": "user", "content": command},
+                    {"role": "assistant", "content": answer}
+                ], user_id="aditya")
+            except Exception:
+                pass
         return
 
     elif route["intent"] == "multi_part":
@@ -206,30 +239,79 @@ def process_command(command):
         add_message("assistant", combined)
         if VOICE_ENABLED:
             speak(combined)
+        try:
+            add_memory([
+                {"role": "user", "content": command},
+                {"role": "assistant", "content": combined}
+            ], user_id="aditya")
+        except Exception:
+            pass
         return
 
     elif route["intent"] == "personal_lookup":
         from modules.memory.memory import recall
+        from modules.memory.mem0_memory import search_memory
+        
+        # First try old memory system
         key = route["key"]
         value = recall(key)
+        
         if value:
             display_key = key.replace("_", " ").strip()
             if display_key.startswith("my "):
                 display_key = display_key[3:]
             response = f"Your {display_key} is {value}."
-            print("RAF:", response)
-            add_message("assistant", response)
-            if VOICE_ENABLED:
-                speak(response)
         else:
-            display_key = key.replace("_", " ").strip()
-            if display_key.startswith("my "):
-                display_key = display_key[3:]
-            response = f"I don't remember your {display_key} yet."
-            print("RAF:", response)
-            add_message("assistant", response)
-            if VOICE_ENABLED:
-                speak(response)
+            # Try Mem0 semantic search
+            try:
+                mem0_results = search_memory(command, user_id="aditya", limit=3)
+                results = mem0_results.get("results", []) if isinstance(mem0_results, dict) else mem0_results
+                if results:
+                    # Combine top results
+                    memories = [r.get("memory", "") for r in results if r.get("memory")]
+                    if memories:
+                        response = f"From what I remember: {memories[0]}"
+                    else:
+                        response = f"I don't remember your {key.replace('_', ' ')} yet."
+                else:
+                    display_key = key.replace("_", " ").strip()
+                    if display_key.startswith("my "):
+                        display_key = display_key[3:]
+                    response = f"I don't remember your {display_key} yet."
+            except Exception as e:
+                display_key = key.replace("_", " ").strip()
+                if display_key.startswith("my "):
+                    display_key = display_key[3:]
+                response = f"I don't remember your {display_key} yet."
+        
+        print("RAF:", response)
+        add_message("assistant", response)
+        if VOICE_ENABLED:
+            speak(response)
+        return
+
+    elif route["intent"] == "memory_search":
+        from modules.memory.mem0_memory import search_memory
+        try:
+            mem0_results = search_memory(command, user_id="aditya", limit=5)
+            if isinstance(mem0_results, dict):
+                results = mem0_results.get("results", [])
+            else:
+                results = mem0_results
+            if results:
+                memories = [r.get("memory", "") for r in results if r.get("memory")]
+                if memories:
+                    response = "Here's what I remember: " + " ".join(memories[:3])
+                else:
+                    response = "I don't have any memories about that yet."
+            else:
+                response = "I don't have any memories about that yet."
+        except Exception:
+            response = "I don't have any memories about that yet."
+        print("RAF:", response)
+        add_message("assistant", response)
+        if VOICE_ENABLED:
+            speak(response)
         return
 
     elif route["intent"] == "command":
@@ -249,6 +331,17 @@ def process_command(command):
         if result:
             if require_owner():
                 handle_remember(result)
+            # Also store in permanent memory if it's a family fact
+            try:
+                key = result.get("key", "")
+                value = result.get("value", "")
+                # Check if it's a family-related fact
+                family_keywords = ["dad", "mom", "father", "mother", "brother", "sister",
+                                   "family", "grandma", "grandpa", "uncle", "aunt", "cousin"]
+                if any(kw in key.lower() or kw in value.lower() for kw in family_keywords):
+                    add_permanent(f"{key.replace('_', ' ')}: {value}", category="family")
+            except Exception:
+                pass
         return
 
     elif route["intent"] == "recall":
@@ -278,6 +371,13 @@ def process_command(command):
         print("RAF:", response)
         if VOICE_ENABLED:
             speak(response)
+        try:
+            add_memory([
+                {"role": "user", "content": command},
+                {"role": "assistant", "content": response}
+            ], user_id="aditya")
+        except Exception:
+            pass
         return
 
     elif route["intent"] == "search":
@@ -320,6 +420,16 @@ def process_command(command):
         print("RAF:", response)
         if VOICE_ENABLED:
             speak(response)
+        # =========================
+        # Add to Mem0 (automatic extraction)
+        # =========================
+        try:
+            add_memory([
+                {"role": "user", "content": command},
+                {"role": "assistant", "content": response}
+            ], user_id="aditya")
+        except Exception:
+            pass
         return
 
     # =========================
@@ -548,5 +658,13 @@ def process_command(command):
         print("RAF:", response)
         if VOICE_ENABLED:
             speak(response)
+        # Add to Mem0
+        try:
+            add_memory([
+                {"role": "user", "content": command},
+                {"role": "assistant", "content": response}
+            ], user_id="aditya")
+        except Exception:
+            pass
     else:
         handle_unknown()

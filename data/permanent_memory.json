@@ -1,0 +1,18 @@
+[
+    {
+        "id": 1,
+        "fact": "mom's name: sunita",
+        "category": "family",
+        "context": "",
+        "timestamp": "2026-09-11T22:58:46.264961",
+        "archived": false
+    },
+    {
+        "id": 2,
+        "fact": "dad's name: rajesh",
+        "category": "family",
+        "context": "",
+        "timestamp": "2026-09-11T22:58:49.291269",
+        "archived": false
+    }
+]
