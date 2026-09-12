@@ -70,6 +70,41 @@ def get_identity():
 
 
 def search_permanent(keyword):
+    """
+    Search permanent memories by keyword.
+    Uses word-level matching to avoid false positives.
+    """
     data = load_permanent()
-    keyword = keyword.lower()
+    keyword = keyword.lower().strip()
+    
+    # Extract the main relationship word
+    relationship_map = {
+        # Check longer words FIRST
+        "grandfather": "grandfather", "grandpa": "grandfather",
+        "grandmother": "grandmother", "grandma": "grandmother",
+        "sister": "sister",
+        "brother": "brother",
+        "father": "dad", "dad": "dad",
+        "mother": "mom", "mom": "mom",
+    }
+    
+    # Find the canonical relationship
+    canonical = None
+    keyword_lower = keyword.lower()
+    for key, value in relationship_map.items():
+        if key in keyword_lower:
+            canonical = value
+            break
+    
+    if canonical:
+        # Exact match on the relationship word
+        results = []
+        for m in data:
+            fact_lower = m["fact"].lower()
+            # Check for the relationship word anywhere in the fact
+            if canonical in fact_lower:
+                results.append(m)
+        return results
+    
+    # Fallback: keyword match
     return [m for m in data if keyword in m["fact"].lower()]

@@ -98,16 +98,32 @@ class IntentRouter:
         memory_phrases = [
             "tell me about my", "tell me about me", "what do you remember about",
             "do you remember my", "do you remember when", "what do you know about me",
-            "tell me about my dad", "tell me about my mom", "tell me about my family",
+            "who is in my family", "who is my family", "my family",
+            "who are my family", "list my family",
+            # Friend triggers
+            "tell me about my friend", "who is my friend", "do you know my friend",
+            "tell me about my best friend", "who is my best friend",
+            # General people triggers
+            "tell me about my friend", "what do you know about my friend",
         ]
         for phrase in memory_phrases:
             if phrase in command_lower:
                 return {"intent": "memory_search"}
 
         # =========================
-        # MEMORY STATEMENTS
+        # MEMORY STATEMENTS (including friend statements)
         # =========================
         from modules.language.language import get_memory_statement, get_remember_command
+        
+        # Check for friend/people memory statements
+        friend_patterns = [
+            "my friend ", "my best friend ", "my colleague ",
+            "my classmate ", "my roommate ",
+        ]
+        for pattern in friend_patterns:
+            if pattern in command_lower:
+                return {"intent": "friend_memory"}
+        
         if get_memory_statement(command) or get_remember_command(command):
             return {"intent": "memory"}
 

@@ -130,7 +130,7 @@ def process_command(command):
                 print(f"  - {m['fact']}")
         # Mem0 semantic search for family
         try:
-            results = search_memory("family mom dad", user_id="aditya", limit=10)
+            results = search_memory("family members parents siblings grandparents", user_id="aditya", limit=20)
             if isinstance(results, dict):
                 results = results.get("results", [])
             if results:
@@ -251,38 +251,58 @@ def process_command(command):
     elif route["intent"] == "personal_lookup":
         from modules.memory.memory import recall
         from modules.memory.mem0_memory import search_memory
+        from modules.memory.permanent_memory import search_permanent
         
-        # First try old memory system
         key = route["key"]
-        value = recall(key)
+        response = None
         
-        if value:
-            display_key = key.replace("_", " ").strip()
-            if display_key.startswith("my "):
-                display_key = display_key[3:]
-            response = f"Your {display_key} is {value}."
-        else:
-            # Try Mem0 semantic search
-            try:
-                mem0_results = search_memory(command, user_id="aditya", limit=3)
-                results = mem0_results.get("results", []) if isinstance(mem0_results, dict) else mem0_results
-                if results:
-                    # Combine top results
-                    memories = [r.get("memory", "") for r in results if r.get("memory")]
-                    if memories:
-                        response = f"From what I remember: {memories[0]}"
-                    else:
-                        response = f"I don't remember your {key.replace('_', ' ')} yet."
-                else:
-                    display_key = key.replace("_", " ").strip()
-                    if display_key.startswith("my "):
-                        display_key = display_key[3:]
-                    response = f"I don't remember your {display_key} yet."
-            except Exception as e:
+        # Extract search term from key
+        search_term = key.replace("my_", "").replace("_", " ")
+        
+        # =========================
+        # STEP 1: Search permanent memory (exact matches)
+        # =========================
+        permanent_results = search_permanent(search_term)
+        if permanent_results:
+            memories = [m["fact"] for m in permanent_results]
+            response = "Here's what I know: " + " | ".join(memories)
+        
+        # =========================
+        # STEP 2: Try old memory system
+        # =========================
+        if not response:
+            value = recall(key)
+            if value:
                 display_key = key.replace("_", " ").strip()
                 if display_key.startswith("my "):
                     display_key = display_key[3:]
-                response = f"I don't remember your {display_key} yet."
+                response = f"Your {display_key} is {value}."
+        
+        # =========================
+        # STEP 3: Try Mem0
+        # =========================
+        if not response:
+            try:
+                mem0_results = search_memory(command, user_id="aditya", limit=3)
+                if isinstance(mem0_results, dict):
+                    results = mem0_results.get("results", [])
+                else:
+                    results = mem0_results
+                if results:
+                    memories = [r.get("memory", "") for r in results if r.get("memory")]
+                    if memories:
+                        response = "Here's what I remember: " + " | ".join(memories[:3])
+            except Exception:
+                pass
+        
+        # =========================
+        # STEP 4: Fallback
+        # =========================
+        if not response:
+            display_key = key.replace("_", " ").strip()
+            if display_key.startswith("my "):
+                display_key = display_key[3:]
+            response = f"I don't remember your {display_key} yet."
         
         print("RAF:", response)
         add_message("assistant", response)
@@ -291,23 +311,119 @@ def process_command(command):
         return
 
     elif route["intent"] == "memory_search":
+        from modules.memory.permanent_memory import get_family, get_identity, search_permanent
         from modules.memory.mem0_memory import search_memory
-        try:
-            mem0_results = search_memory(command, user_id="aditya", limit=5)
-            if isinstance(mem0_results, dict):
-                results = mem0_results.get("results", [])
+        
+        response = None
+        
+        # =========================
+        # SPECIAL CASE: "who is in my family" / "my family"
+        # =========================
+        if "family" in command.lower():
+            family = get_family()
+            if family:
+                memories = [m["fact"] for m in family]
+                response = "Here's your family: " + " | ".join(memories)
             else:
-                results = mem0_results
-            if results:
-                memories = [r.get("memory", "") for r in results if r.get("memory")]
-                if memories:
-                    response = "Here's what I remember: " + " ".join(memories[:3])
+                response = "I don't have any family memories yet."
+            print("RAF:", response)
+            add_message("assistant", response)
+            if VOICE_ENABLED:
+                speak(response)
+            return
+        # =========================
+        # FRIENDS — use Mem0 semantic search with filter
+        # =========================
+        if "friend" in command.lower():
+            try:
+                mem0_results = search_memory(command, user_id="aditya", limit=20)
+                if isinstance(mem0_results, dict):
+                    results = mem0_results.get("results", [])
                 else:
-                    response = "I don't have any memories about that yet."
-            else:
-                response = "I don't have any memories about that yet."
-        except Exception:
+                    results = mem0_results
+                
+                # Check if a specific friend name is mentioned
+                # Extract name after "friend " 
+                import re
+                name_match = re.search(r'friend\s+(\w+)', command.lower())
+                specific_name = name_match.group(1) if name_match else None
+                
+                # Filter friend memories
+                friend_memories = []
+                for r in results:
+                    mem = r.get("memory", "")
+                    mem_lower = mem.lower()
+                    if "friend" in mem_lower:
+                        # If a specific name is mentioned, only include that person
+                        if specific_name:
+                            if specific_name in mem_lower:
+                                friend_memories.append(mem)
+                        else:
+                            friend_memories.append(mem)
+                
+                if friend_memories:
+                    if specific_name:
+                        response = f"Here's what I remember about {specific_name.title()}: " + " | ".join(friend_memories[:5])
+                    else:
+                        response = "Here's what I remember about your friends: " + " | ".join(friend_memories[:5])
+                else:
+                    if specific_name:
+                        response = f"I don't have any memories about {specific_name.title()} yet."
+                    else:
+                        response = "I don't have any memories about your friends yet."
+            except Exception:
+                response = "I don't have any memories about your friends yet."
+            print("RAF:", response)
+            add_message("assistant", response)
+            if VOICE_ENABLED:
+                speak(response)
+            return
+
+        # =========================
+        # OTHERWISE: Search by relationship
+        # =========================
+        relationship_keywords = {
+            # Check longer words FIRST (grandfather before father)
+            "grandfather": "grandfather", "grandpa": "grandfather",
+            "grandmother": "grandmother", "grandma": "grandmother",
+            "sister": "sister", "brother": "brother",
+            "father": "dad", "dad": "dad",
+            "mother": "mom", "mom": "mom",
+        }
+        
+        matched_keyword = None
+        command_lower = command.lower()
+        for keyword, canonical in relationship_keywords.items():
+            if keyword in command_lower:
+                matched_keyword = canonical
+                break
+        
+        # Search permanent memory
+        permanent_results = search_permanent(matched_keyword if matched_keyword else command)
+        
+        if permanent_results:
+            memories = [m["fact"] for m in permanent_results]
+            response = "Here's what I know: " + " | ".join(memories)
+        
+        # Step 2: If no permanent match, try Mem0
+        if not response:
+            try:
+                mem0_results = search_memory(command, user_id="aditya", limit=3)
+                if isinstance(mem0_results, dict):
+                    results = mem0_results.get("results", [])
+                else:
+                    results = mem0_results
+                if results:
+                    memories = [r.get("memory", "") for r in results if r.get("memory")]
+                    if memories:
+                        response = "Here's what I remember: " + " | ".join(memories[:3])
+            except Exception:
+                pass
+        
+        # Step 3: Fallback
+        if not response:
             response = "I don't have any memories about that yet."
+        
         print("RAF:", response)
         add_message("assistant", response)
         if VOICE_ENABLED:
@@ -340,6 +456,32 @@ def process_command(command):
                                    "family", "grandma", "grandpa", "uncle", "aunt", "cousin"]
                 if any(kw in key.lower() or kw in value.lower() for kw in family_keywords):
                     add_permanent(f"{key.replace('_', ' ')}: {value}", category="family")
+            except Exception:
+                pass
+        return
+
+    elif route["intent"] == "friend_memory":
+        # Store friend fact using existing memory statement parser
+        result = get_memory_statement(command)
+        if result:
+            if require_owner():
+                handle_remember(result)
+            # Also add to Mem0 explicitly
+            try:
+                from modules.memory.mem0_memory import add_memory
+                add_memory([
+                    {"role": "user", "content": command}
+                ], user_id="aditya")
+            except Exception:
+                pass
+        else:
+            # Fallback: store the whole sentence
+            print("RAF: Got it, I'll remember that.")
+            try:
+                from modules.memory.mem0_memory import add_memory
+                add_memory([
+                    {"role": "user", "content": command}
+                ], user_id="aditya")
             except Exception:
                 pass
         return

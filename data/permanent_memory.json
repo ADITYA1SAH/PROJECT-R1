@@ -14,5 +14,37 @@
         "context": "",
         "timestamp": "2026-09-11T22:58:49.291269",
         "archived": false
+    },
+    {
+        "id": 3,
+        "fact": "sister's name: priya",
+        "category": "family",
+        "context": "",
+        "timestamp": "2026-09-12T15:19:39.282535",
+        "archived": false
+    },
+    {
+        "id": 4,
+        "fact": "grandfather's name: mohan",
+        "category": "family",
+        "context": "",
+        "timestamp": "2026-09-12T15:19:39.952354",
+        "archived": false
+    },
+    {
+        "id": 5,
+        "fact": "grandmother's name: kamla",
+        "category": "family",
+        "context": "",
+        "timestamp": "2026-09-12T15:19:41.174523",
+        "archived": false
+    },
+    {
+        "id": 6,
+        "fact": "brother's name: arjun",
+        "category": "family",
+        "context": "",
+        "timestamp": "2026-09-12T15:19:41.849446",
+        "archived": false
     }
 ]

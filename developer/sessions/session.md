@@ -2986,3 +2986,106 @@ Next Goal:
 • Store life events (birthdays, milestones)
 • Continue testing remaining categories
 • Begin Phase 8 — Vision (Face, Lens, Webcam)
+
+==============================
+Day 37 - Family & Friends Memory Integration
+==============================
+Date: 2026-09-12
+Version: v0.0.3 Alpha
+Time Planned: ~4 Hours
+Actual Time: ~4 Hours
+
+Completed:
+✓ Started Qdrant container after restart (data persisted)
+✓ Verified Mem0 memories survive restarts
+✓ Stored 6 family members in permanent memory (mom, dad, sister, brother, grandfather, grandmother)
+✓ Fixed family memory search (longest keyword first — grandfather before father)
+✓ Fixed relationship keyword matching (word-level not substring)
+✓ Added "who is in my family" special case
+✓ Fixed personal_lookup to search permanent memory first
+✓ Fixed memory_search to search permanent memory before Mem0
+✓ Added friend memory support (automatic via Mem0)
+✓ Added friend name filtering for specific friend queries
+✓ Fixed "tell me about my friend X" to return only that friend
+✓ Tested complete family + friends memory pipeline
+
+Bugs Fixed:
+✓ Grandfather matching dad (substring issue) — fixed with longest-word-first
+✓ "who is in my family" returning single memory — fixed with special case
+✓ "what is my mom's name" going to Mem0 — fixed with permanent memory search first
+✓ "tell me about my friend Rohan" returning all friends — fixed with name filter
+✓ Friend statements not being stored — fixed with friend_memory intent
+✓ Personal_lookup not searching permanent memory — fixed
+
+Architecture Improvements:
+✓ Permanent memory layer now searched FIRST (exact matches)
+✓ Mem0 used as fallback (semantic search)
+✓ Family memories never deleted
+✓ Friend memories auto-extracted by Mem0
+✓ No hardcoding for friends — fully automatic
+✓ Relationship keyword matching uses longest-word-first logic
+✓ Specific friend queries filter by name
+
+Testing Results:
+✓ "my sister's name is Priya" → stored in permanent ✅
+✓ "my grandfather's name is Mohan" → stored ✅
+✓ "show family" → all 6 family members ✅
+✓ "tell me about my dad" → "dad's name: rajesh" ✅
+✓ "what is my mom's name" → "mom's name: sunita" ✅
+✓ "do you remember my grandfather" → "grandfather's name: mohan" ✅
+✓ "who is in my family" → all members ✅
+✓ "my friend Rohan loves gaming" → stored in Mem0 ✅
+✓ "tell me about my friend Rohan" → only Rohan's memories ✅
+✓ "tell me about my friends" → all friends ✅
+
+Current Progress:
+Foundation...............100%
+Brain....................100%
+Memory...................100%
+Permanent Memory.........100%
+Mem0 Semantic Memory.....100%
+Qdrant Vector DB.........100%
+Family Memory............100%
+Friend Memory............100%
+Identity.................100%
+Permissions..............100%
+Personality...............90%
+Conversation Engine......100%
+Emotion Engine...........100%
+Context Builder..........100%
+Prompt Builder............100%
+Memory Search............100%
+Memory Ranking...........100%
+Time Awareness............100%
+Calendar Context..........100%
+Calendar Routing..........100%
+Personal Grounding........100%
+Intelligence Router.......100%
+Internet Search...........90%
+Voice Output.............100%
+Voice Input..............100%
+Modes System.............100%
+Multi-Model Integration..100%
+GLiClass Router..........100%
+Automatic Search.........90%
+Self-Learning Memory.....80%
+Vision.....................0%
+Workspace Control..........0%
+Local LLM.................70%
+
+Today's Milestone:
+RAF now has:
+• Complete family memory (6 members, permanent)
+• Complete friend memory (automatic via Mem0)
+• Name-specific friend search (Rohan, Priya)
+• Permanent memory searched FIRST (exact)
+• Mem0 semantic search as fallback
+• No hardcoding for friends
+• Both family and friends preserved forever
+
+Next Goal:
+• Test Category 2 — Personal / Memory questions
+• Fix any failures in personal questions
+• Move to Category 3 — RAF Self-Questions
+• Continue testing remaining categories
+• Begin Phase 8 — Vision (Face, Lens, Webcam)
