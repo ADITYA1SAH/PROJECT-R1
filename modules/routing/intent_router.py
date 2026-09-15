@@ -93,18 +93,15 @@ class IntentRouter:
             return {"intent": "personal_lookup", "key": lookup_result}
 
         # =========================
-        # MEMORY QUESTIONS (tell me about my X, remember X, etc.)
+        # MEMORY QUESTIONS (people-focused only)
         # =========================
         memory_phrases = [
             "tell me about my", "tell me about me", "what do you remember about",
             "do you remember my", "do you remember when", "what do you know about me",
             "who is in my family", "who is my family", "my family",
             "who are my family", "list my family",
-            # Friend triggers
             "tell me about my friend", "who is my friend", "do you know my friend",
             "tell me about my best friend", "who is my best friend",
-            # General people triggers
-            "tell me about my friend", "what do you know about my friend",
         ]
         for phrase in memory_phrases:
             if phrase in command_lower:

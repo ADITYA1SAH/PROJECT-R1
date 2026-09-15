@@ -3089,3 +3089,101 @@ Next Goal:
 • Move to Category 3 — RAF Self-Questions
 • Continue testing remaining categories
 • Begin Phase 8 — Vision (Face, Lens, Webcam)
+
+==============================
+Day 38 - Personal Memory Fix + Category 2 Complete
+==============================
+Date: 2026-09-15
+Version: v0.0.3 Alpha
+Time Planned: ~3 Hours
+Actual Time: ~3 Hours
+
+Completed:
+✓ Started Qdrant container (data persisted across 2-day break)
+✓ Tested Category 2 — Personal / Memory questions
+✓ Found issue: personal questions going to Mem0 instead of memory.json
+✓ Found issue: key mismatch (some keys have "my_" prefix, some don't)
+✓ Added direct personal lookup BEFORE router (bypasses all routing)
+✓ Fixed key matching to try both with and without "my_" prefix
+✓ Tested all 12 personal questions — all working
+✓ Category 2 COMPLETE
+
+Bugs Fixed:
+✓ "what is my name" → returning family list (fixed with direct lookup)
+✓ "what is my favorite color" → returning friends (fixed with direct lookup)
+✓ "what is my hobby" → returning friends (fixed with direct lookup)
+✓ "what is my project" → returning friends (fixed with direct lookup)
+✓ "what is my goal" → returning friends (fixed with direct lookup)
+✓ "what is my age" → returning friends (fixed with direct lookup)
+✓ "where do i live" → returning wrong info (fixed with direct lookup)
+✓ Key mismatch (my_ prefix inconsistency) — fixed with multi-format lookup
+
+Architecture Improvements:
+✓ Direct personal lookup bypasses router entirely
+✓ Multi-format key matching (tries direct_key, without my_, with my_)
+✓ Personal memory searched before Mem0
+✓ Mem0 only used for people (friends/family) questions
+✓ Clean separation: memory.json = personal facts, Mem0 = people/stories
+
+Testing Results:
+✓ "what is my name" → "aditya" ✅
+✓ "what is my favorite color" → "blue" ✅
+✓ "what is my hobby" → "robotics" ✅
+✓ "what is my project" → "project r1" ✅
+✓ "what is my goal" → "build raf into a fully autonomous ai companion" ✅
+✓ "what is my age" → "18" ✅
+✓ "what is my school" → "manipal public school" ✅
+✓ "what is my city" → "lucknow" ✅
+✓ "what is my country" → "india" ✅
+✓ "when is my birthday" → "15 may 2008" ✅
+✓ "do i have a pet" → "no pet" ✅
+✓ "where do i live" → "greater noida" ✅
+
+Current Progress:
+Foundation...............100%
+Brain....................100%
+Memory...................100%
+Permanent Memory.........100%
+Mem0 Semantic Memory.....100%
+Qdrant Vector DB.........100%
+Family Memory............100%
+Friend Memory............100%
+Personal Memory..........100%
+Identity.................100%
+Permissions..............100%
+Personality...............90%
+Conversation Engine......100%
+Emotion Engine...........100%
+Context Builder..........100%
+Prompt Builder............100%
+Memory Search............100%
+Memory Ranking...........100%
+Time Awareness............100%
+Calendar Context..........100%
+Calendar Routing..........100%
+Personal Grounding........100%
+Intelligence Router.......100%
+Internet Search...........90%
+Voice Output.............100%
+Voice Input..............100%
+Modes System.............100%
+Multi-Model Integration..100%
+GLiClass Router..........100%
+Automatic Search.........90%
+Self-Learning Memory.....80%
+Vision.....................0%
+Workspace Control..........0%
+Local LLM.................70%
+
+Today's Milestone:
+• Category 2 (Personal Memory) — 12/12 working
+• Direct personal lookup bypasses router
+• Multi-format key matching fixed inconsistency
+• Clean separation: memory.json (facts) vs Mem0 (people)
+
+Next Goal:
+• Test Category 3 — RAF Self-Questions
+• Test Category 4 — Search / General Knowledge
+• Test Category 5 — Weather
+• Test Category 6 — Commands
+• Test Category 7 — Typos / Auto-Correct

@@ -161,6 +161,38 @@ def process_command(command):
         return
 
     # =========================
+    # DIRECT PERSONAL LOOKUP — bypass router for simple personal questions
+    # =========================
+    from modules.memory.memory import recall as direct_recall
+    from modules.language.language import get_personal_lookup as direct_lookup
+    
+    direct_key = direct_lookup(command)
+    if direct_key:
+        from modules.memory.memory import load_memory
+        memory_data = load_memory()
+        
+        # Try multiple key formats
+        direct_value = None
+        for test_key in [direct_key, direct_key.replace("my_", ""), f"my_{direct_key}"]:
+            if test_key in memory_data:
+                direct_value = memory_data[test_key]
+                if isinstance(direct_value, dict):
+                    direct_value = direct_value.get("value")
+                direct_key = test_key
+                break
+        
+        if direct_value:
+            display_key = direct_key.replace("_", " ").strip()
+            if display_key.startswith("my "):
+                display_key = display_key[3:]
+            response = f"Your {display_key} is {direct_value}."
+            print("RAF:", response)
+            add_message("assistant", response)
+            if VOICE_ENABLED:
+                speak(response)
+            return
+
+    # =========================
     # "Did you mean?" Auto-correct — MUST RUN BEFORE ROUTER
     # =========================
 
@@ -256,44 +288,54 @@ def process_command(command):
         key = route["key"]
         response = None
         
-        # Extract search term from key
-        search_term = key.replace("my_", "").replace("_", " ")
+        # =========================
+        # STEP 1: Try OLD memory system FIRST (personal facts)
+        # =========================
+        value = recall(key)
+        if value:
+            display_key = key.replace("_", " ").strip()
+            if display_key.startswith("my "):
+                display_key = display_key[3:]
+            response = f"Your {display_key} is {value}."
         
         # =========================
-        # STEP 1: Search permanent memory (exact matches)
-        # =========================
-        permanent_results = search_permanent(search_term)
-        if permanent_results:
-            memories = [m["fact"] for m in permanent_results]
-            response = "Here's what I know: " + " | ".join(memories)
-        
-        # =========================
-        # STEP 2: Try old memory system
+        # STEP 2: Try permanent memory (family facts)
+        # ONLY if the question is about family
         # =========================
         if not response:
-            value = recall(key)
-            if value:
-                display_key = key.replace("_", " ").strip()
-                if display_key.startswith("my "):
-                    display_key = display_key[3:]
-                response = f"Your {display_key} is {value}."
+            family_keywords = ["dad", "mom", "father", "mother", "sister", "brother",
+                               "grandfather", "grandmother", "family", "grandpa", "grandma"]
+            search_term = key.replace("my_", "").replace("_", " ")
+            is_family_question = any(kw in search_term.lower() for kw in family_keywords)
+            
+            if is_family_question:
+                permanent_results = search_permanent(search_term)
+                if permanent_results:
+                    memories = [m["fact"] for m in permanent_results]
+                    response = "Here's what I know: " + " | ".join(memories)
         
         # =========================
-        # STEP 3: Try Mem0
+        # STEP 3: Try Mem0 ONLY if the question is about friends/family
         # =========================
         if not response:
-            try:
-                mem0_results = search_memory(command, user_id="aditya", limit=3)
-                if isinstance(mem0_results, dict):
-                    results = mem0_results.get("results", [])
-                else:
-                    results = mem0_results
-                if results:
-                    memories = [r.get("memory", "") for r in results if r.get("memory")]
-                    if memories:
-                        response = "Here's what I remember: " + " | ".join(memories[:3])
-            except Exception:
-                pass
+            friend_family_keywords = ["friend", "family", "dad", "mom", "sister", "brother",
+                                       "grandfather", "grandmother", "father", "mother"]
+            search_term_lower = key.replace("my_", "").replace("_", " ").lower()
+            is_people_question = any(kw in search_term_lower for kw in friend_family_keywords)
+            
+            if is_people_question:
+                try:
+                    mem0_results = search_memory(command, user_id="aditya", limit=3)
+                    if isinstance(mem0_results, dict):
+                        results = mem0_results.get("results", [])
+                    else:
+                        results = mem0_results
+                    if results:
+                        memories = [r.get("memory", "") for r in results if r.get("memory")]
+                        if memories:
+                            response = "Here's what I remember: " + " | ".join(memories[:3])
+                except Exception:
+                    pass
         
         # =========================
         # STEP 4: Fallback

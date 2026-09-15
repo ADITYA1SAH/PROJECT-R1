@@ -1,1 +1,1 @@
-{"schema":{"user_id":"keyword","actor_id":"keyword","run_id":"keyword","agent_id":"keyword"}}
+{"schema":{"run_id":"keyword","agent_id":"keyword","actor_id":"keyword","user_id":"keyword"}}
