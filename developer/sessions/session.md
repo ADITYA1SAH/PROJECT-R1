@@ -3187,3 +3187,111 @@ Next Goal:
 • Test Category 5 — Weather
 • Test Category 6 — Commands
 • Test Category 7 — Typos / Auto-Correct
+
+==============================
+Day 39 - SearXNG + Query Classifier + Maintenance Agent
+==============================
+Date: 2026-09-17
+Version: v0.0.3 Alpha
+Time Planned: ~3 Hours
+Actual Time: ~4 Hours
+
+Completed:
+✓ Tested Category 3 — RAF Self-Questions (8/8 working)
+✓ Found issue: Category 4 search returning definitions, not answers
+✓ Set up SearXNG in Docker (self-hosted, no API key, unlimited)
+✓ Enabled JSON format in SearXNG settings
+✓ Created modules/internet/searxng_search.py (smart answer extraction)
+✓ Updated search.py to use SearXNG FIRST, then DuckDuckGo fallback
+✓ Tested SearXNG — returns "Narendra Modi", "Paris" correctly
+✓ Created modules/routing/query_classifier.py (question/statement/chat)
+✓ Integrated query classifier into brain.py
+✓ Added question_search handler (memory → Mem0 → internet flow)
+✓ Created modules/memory/maintenance.py (merge duplicates + Markdown export)
+✓ Added memory maintenance and export memory commands
+✓ Tested maintenance agent — working
+✓ Category 4 — Search / General Knowledge COMPLETE
+
+Bugs Fixed:
+✓ Search returning Wikipedia definitions instead of answers
+✓ "who is the prime minister" returning "head of government"
+✓ "what is the capital of France" returning "closed-ended question"
+✓ No distinction between questions, statements, and chat
+✓ Questions not checking memory before internet
+✓ Duplicate memories piling up
+
+Architecture Improvements:
+✓ SearXNG replaces Wikipedia for factual search (better results)
+✓ Query classifier distinguishes question/statement/chat
+✓ Question flow: permanent memory → Mem0 → internet
+✓ Statement flow: stored in Mem0 automatically
+✓ Chat flow: LLM only (no search, no memory)
+✓ Maintenance agent merges duplicates
+✓ Markdown exports for human-readable backup
+✓ Git-able memory files
+
+Testing Results:
+✓ "who are you" → RAF identity ✅
+✓ "what is your name" → "My name is RAF..." ✅
+✓ "how are you" → "I'm doing great!" ✅
+✓ "who created you" → "I was created by Aditya..." ✅
+✓ "who is the prime minister of india" → "Narendra Modi" ✅
+✓ "what is the capital of France" → "Paris" ✅
+✓ "what is my name" → "aditya" ✅
+✓ "my dad is Rajesh" → stored ✅
+✓ "hello" → greeting ✅
+✓ "memory maintenance" → merged + exported ✅
+✓ "export memory" → Markdown files created ✅
+
+Current Progress:
+Foundation...............100%
+Brain....................100%
+Memory...................100%
+Permanent Memory.........100%
+Mem0 Semantic Memory.....100%
+Qdrant Vector DB.........100%
+Family Memory............100%
+Friend Memory............100%
+Personal Memory..........100%
+Identity.................100%
+Permissions..............100%
+Personality...............90%
+Conversation Engine......100%
+Emotion Engine...........100%
+Context Builder..........100%
+Prompt Builder............100%
+Memory Search............100%
+Memory Ranking...........100%
+Time Awareness............100%
+Calendar Context..........100%
+Calendar Routing..........100%
+Personal Grounding........100%
+Intelligence Router.......100%
+Query Classifier.........100%
+Internet Search...........100%
+SearXNG..................100%
+Maintenance Agent........100%
+Voice Output.............100%
+Voice Input..............100%
+Modes System.............100%
+Multi-Model Integration..100%
+GLiClass Router..........100%
+Self-Learning Memory.....90%
+Vision.....................0%
+Workspace Control..........0%
+Local LLM.................70%
+
+Today's Milestone:
+• Category 3 complete (RAF Self-Questions)
+• Category 4 complete (Search / General Knowledge)
+• SearXNG replaces Wikipedia (better results, no limits)
+• Query classifier distinguishes question/statement/chat
+• Question flow: memory → Mem0 → internet
+• Maintenance agent merges duplicates + exports Markdown
+• Human-readable memory backup (git-able)
+
+Next Goal:
+• Test Category 5 — Weather
+• Test Category 6 — Commands
+• Test Category 7 — Typos / Auto-Correct
+• Begin Phase 8 — Vision (Face, Lens, Webcam)

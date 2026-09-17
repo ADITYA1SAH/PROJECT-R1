@@ -8,6 +8,7 @@ import json
 import re
 from modules.llm.llm import generate_response
 from modules.internet.browser_search import search_duckduckgo
+from modules.internet.searxng_search import searxng_search
 
 # Try to use PyEnchant (real dictionary) first
 try:
@@ -86,77 +87,6 @@ def correct_spelling(query):
     return query
 
 
-def search_wikipedia_infobox(query):
-    """
-    Use Wikipedia API directly to extract infobox data.
-    No wptools needed.
-    """
-    try:
-        # Clean the query — remove question words
-        clean_query = query.lower()
-        for word in ["who is the", "what is the", "where is the", "who is", "what is", "where is", "the"]:
-            clean_query = clean_query.replace(word, "")
-        clean_query = clean_query.strip()
-        
-        # Step 1: Search Wikipedia for the best matching page
-        search_url = "https://en.wikipedia.org/w/api.php"
-        params = {
-            "action": "query",
-            "list": "search",
-            "srsearch": clean_query,
-            "format": "json",
-            "srlimit": 1
-        }
-        response = requests.get(search_url, params=params, timeout=10)
-        data = response.json()
-        
-        search_results = data.get("query", {}).get("search", [])
-        if not search_results:
-            return None
-        
-        page_title = search_results[0]["title"]
-        
-        # Step 2: Get the raw wikitext
-        params = {
-            "action": "parse",
-            "page": page_title,
-            "prop": "wikitext",
-            "format": "json"
-        }
-        response = requests.get(search_url, params=params, timeout=10)
-        data = response.json()
-        
-        if "parse" not in data:
-            return None
-        
-        wikitext = data["parse"]["wikitext"]["*"]
-        
-        # Step 3: Extract the incumbent/current field from infobox
-        # Look for "incumbent" field
-        match = re.search(r'incumbent\s*=\s*\[?\[?([^\|\]\n]+)', wikitext, re.IGNORECASE)
-        if match:
-            result = match.group(1).strip()
-            # Clean up wiki links
-            result = re.sub(r'\[\[([^\|\]]+)\|?[^\]]*\]\]', r'\1', result)
-            result = re.sub(r'\[\[([^\]]+)\]\]', r'\1', result)
-            result = result.strip()
-            if result:
-                return result
-        
-        # Look for "current" field
-        match = re.search(r'current\s*=\s*\[?\[?([^\|\]\n]+)', wikitext, re.IGNORECASE)
-        if match:
-            result = match.group(1).strip()
-            result = re.sub(r'\[\[([^\|\]]+)\|?[^\]]*\]\]', r'\1', result)
-            result = result.strip()
-            if result:
-                return result
-        
-        return None
-    except Exception as e:
-        return None
-
-
 def search(query):
     """Search the web and return a short, direct answer."""
     # Check cache first
@@ -187,16 +117,6 @@ def search(query):
             return _search_cache[query]
 
     # =========================
-    # FACTUAL QUERIES — Try Infobox first
-    # =========================
-    factual_keywords = ["prime minister", "president", "capital", "current", "incumbent", "chief minister"]
-    if any(keyword in query.lower() for keyword in factual_keywords):
-        infobox_result = search_wikipedia_infobox(query)
-        if infobox_result:
-            _search_cache[query] = infobox_result
-            return infobox_result
-
-    # =========================
     # CALENDAR / FESTIVAL QUERIES
     # =========================
     if any(keyword in query.lower() for keyword in ["diwali", "holiday", "festival", "when is", "date of"]):
@@ -205,7 +125,18 @@ def search(query):
         return result
 
     # =========================
-    # GENERAL KNOWLEDGE — DuckDuckGo HTML first
+    # GENERAL KNOWLEDGE — SearXNG FIRST (best results)
+    # =========================
+    try:
+        searxng_result = searxng_search(query)
+        if searxng_result:
+            _search_cache[query] = searxng_result
+            return searxng_result
+    except Exception:
+        pass
+
+    # =========================
+    # FALLBACK — DuckDuckGo HTML
     # =========================
     try:
         result = search_duckduckgo(query)
@@ -215,7 +146,9 @@ def search(query):
     except Exception:
         pass
 
-    # Fallback to DuckDuckGo API
+    # =========================
+    # FALLBACK — DuckDuckGo API
+    # =========================
     try:
         headers = {
             "User-Agent": "PROJECT R1/1.0 (https://github.com/your-repo; aditya@example.com)"
@@ -310,11 +243,12 @@ def search_wikipedia(query):
 def is_available():
     """Check if internet search is available."""
     try:
-        headers = {
-            "User-Agent": "PROJECT R1/1.0 (https://github.com/your-repo; aditya@example.com)"
-        }
-        response = requests.get("https://duckduckgo.com", headers=headers, timeout=3)
+        # Check SearXNG first
+        response = requests.get("http://localhost:8080", timeout=3)
+        if response.status_code == 200:
+            return True
+        # Fallback to DuckDuckGo
+        response = requests.get("https://duckduckgo.com", timeout=3)
         return response.status_code == 200
     except:
         return False
-    

@@ -85,10 +85,17 @@ from modules.grounding.grounding import grounding_response
 from modules.routing.intent_router import IntentRouter
 from modules.memory.permanent_memory import add_permanent, get_family, get_identity
 
-
 def process_command(command):
     command = command.strip().lower()
     add_message("user", command)
+
+    # =========================
+    # Query Classification
+    # =========================
+    from modules.routing.query_classifier import classify_query
+    query_type = classify_query(command)
+    print(f"🔍 QUERY TYPE: {query_type}")  # DEBUG
+
 
     # =========================
     # FAST COMMANDS — bypass LLM (MUST BE FIRST)
@@ -143,6 +150,19 @@ def process_command(command):
         if not permanent and not results:
             print("No family memories yet.")
         print()
+        return
+
+    # Memory maintenance
+    if command == "memory maintenance" or command == "clean memory":
+        from modules.memory.maintenance import run_maintenance
+        run_maintenance()
+        return
+
+    # Export memory to Markdown
+    if command == "export memory":
+        from modules.memory.maintenance import export_to_markdown
+        export_to_markdown()
+        print("✅ Exported to data/exports/MEMORY.md and CONVERSATION.md")
         return
 
     # Version
@@ -211,6 +231,28 @@ def process_command(command):
     # =========================
     router = IntentRouter()
     route = router.route(command)
+    
+    # =========================
+    # Override routing based on query type
+    # =========================
+    if query_type == "chat":
+        # Check if it's a greeting first
+        greetings = ["hi", "hello", "hey", "yo", "good morning", "good afternoon", "good evening", "good night"]
+        if command in greetings:
+            route = {"intent": "greeting"}
+        else:
+            # Chat only → LLM, no search, no memory
+            route = {"intent": "conversation"}
+    elif query_type == "statement":
+        # Statement → store in Mem0 (memory handler)
+        if route["intent"] not in ["memory", "friend_memory", "personal_lookup"]:
+            route = {"intent": "memory"}
+    elif query_type == "question":
+        # Question → check memory first, then internet
+        # If route is already personal/memory, keep it
+        # Otherwise, if it's a general question, try memory first then search
+        if route["intent"] == "conversation":
+            route = {"intent": "question_search"}
 
     # =========================
     # Route by Intent
@@ -570,6 +612,57 @@ def process_command(command):
         add_message("assistant", result)
         if VOICE_ENABLED:
             speak(result)
+        return
+
+    elif route["intent"] == "question_search":
+        # Question flow: permanent memory → Mem0 → internet
+        from modules.memory.permanent_memory import search_permanent
+        from modules.memory.mem0_memory import search_memory
+        from modules.memory.memory import load_memory
+        
+        response = None
+        
+        # Step 1: Check permanent memory
+        permanent_results = search_permanent(command)
+        if permanent_results:
+            memories = [m["fact"] for m in permanent_results]
+            response = "Here's what I know: " + " | ".join(memories)
+        
+        # Step 2: Check old memory (JSON)
+        if not response:
+            memory_data = load_memory()
+            command_words = command.lower().split()
+            for key, value in memory_data.items():
+                key_words = key.replace("_", " ").lower().split()
+                if any(kw in command_words for kw in key_words):
+                    if isinstance(value, dict):
+                        value = value.get("value")
+                    response = f"Your {key.replace('_', ' ')} is {value}."
+                    break
+        
+        # Step 3: Check Mem0
+        if not response:
+            try:
+                mem0_results = search_memory(command, user_id="aditya", limit=3)
+                if isinstance(mem0_results, dict):
+                    results = mem0_results.get("results", [])
+                else:
+                    results = mem0_results
+                if results:
+                    memories = [r.get("memory", "") for r in results if r.get("memory")]
+                    if memories:
+                        response = "Here's what I remember: " + " | ".join(memories[:3])
+            except Exception:
+                pass
+        
+        # Step 4: Internet search (fallback)
+        if not response:
+            response = search(command)
+        
+        print("RAF:", response)
+        add_message("assistant", response)
+        if VOICE_ENABLED:
+            speak(response)
         return
 
     elif route["intent"] == "self_question":

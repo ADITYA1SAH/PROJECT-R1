@@ -67,15 +67,31 @@ class IntentRouter:
         # =========================
         # EXPLICIT SEARCH TRIGGERS (HIGHEST PRIORITY)
         # =========================
-        search_triggers = [
-            "weather", "temperature", "prime minister", "capital of",
-            "president", "who is", "what is", "when is", "where is",
-            "how many", "tell me about", "explain",
-        ]
-        if INTERNET_ENABLED and is_available():
-            for trigger in search_triggers:
-                if trigger in command_lower:
-                    if not is_personal_question(command):
+        # Skip search for personal/RAF questions
+        from modules.grounding.grounding import is_personal_question
+        from modules.llm.llm import RAF_SELF_ANSWERS
+        
+        # Check if it's a RAF self-question
+        is_raf_question = False
+        for key in RAF_SELF_ANSWERS:
+            if key in command_lower:
+                is_raf_question = True
+                break
+        
+        # Check if it's a personal question
+        is_personal = is_personal_question(command)
+        
+        # Only search if it's NOT personal and NOT a RAF question
+        if not is_raf_question and not is_personal:
+            search_triggers = [
+                "weather", "temperature", "prime minister", "capital of",
+                "president", "who is", "what is", "when is", "where is",
+                "how many", "tell me about", "explain", "tallest", "largest",
+                "biggest", "smallest", "fastest", "strongest",
+            ]
+            if INTERNET_ENABLED and is_available():
+                for trigger in search_triggers:
+                    if trigger in command_lower:
                         return {"intent": "search"}
 
         # =========================
