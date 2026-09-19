@@ -38,11 +38,28 @@ SEARCH_URL = "https://api.duckduckgo.com/"
 def get_weather(city):
     """Get current weather using wttr.in (free, no API key) — short format."""
     try:
-        city = city.strip().replace(" ", "%20")
-        url = f"https://wttr.in/{city}?format=%C+%t"
+        original_city = city.strip()
+        city_encoded = original_city.replace(" ", "%20")
+        url = f"https://wttr.in/{city_encoded}?format=%C+%t"
         response = requests.get(url, timeout=5)
+        
         if response.status_code == 200:
-            return f"Weather in {city.replace('%20', ' ')}: {response.text.strip()}."
+            weather_text = response.text.strip()
+            # Check if wttr.in returned a valid response (not an error)
+            if weather_text and "Unknown location" not in weather_text and "Sorry" not in weather_text:
+                return f"Weather in {original_city}: {weather_text}."
+        
+        # Retry with country hint if city not found
+        city_with_country = f"{original_city},India"
+        city_encoded = city_with_country.replace(" ", "%20").replace(",", "%2C")
+        url = f"https://wttr.in/{city_encoded}?format=%C+%t"
+        response = requests.get(url, timeout=5)
+        
+        if response.status_code == 200:
+            weather_text = response.text.strip()
+            if weather_text and "Unknown location" not in weather_text and "Sorry" not in weather_text:
+                return f"Weather in {original_city}: {weather_text}."
+        
         return None
     except:
         return None
@@ -93,19 +110,32 @@ def search(query):
     if query in _search_cache:
         return _search_cache[query]
 
-    # Correct spelling before searching
-    query = correct_spelling(query)
+    # Don't spellcheck weather queries (city names aren't in dictionary)
+    if "weather" not in query.lower() and "temperature" not in query.lower():
+        query = correct_spelling(query)
 
     # =========================
     # WEATHER QUERIES
     # =========================
     if "weather" in query.lower() or "temperature" in query.lower():
         city = query.lower()
-        for word in ["what is the", "what's the", "whats the", "what is", "whats", "what's"]:
+        # Remove question words
+        for word in ["what is the", "what's the", "whats the", "what is", "whats", "what's",
+                     "how is the", "how's the", "hows the", "how is", "hows",
+                     "tell me the", "tell me", "give me the", "give me"]:
             city = city.replace(word, "")
-        for word in ["weather", "temperature", "in", "of", "for", "?"]:
+        # Remove weather-related words
+        for word in ["weather", "temperature", "in", "of", "for", "?", "today"]:
             city = city.replace(word, " ")
         city = " ".join(city.split()).strip()
+        
+        # If city is empty, try to extract from "in X" pattern
+        if not city:
+            import re
+            match = re.search(r'in\s+([a-z\s]+)', query.lower())
+            if match:
+                city = match.group(1).strip()
+        
         if not city:
             city = "London"
         result = get_weather(city)

@@ -3295,3 +3295,112 @@ Next Goal:
 • Test Category 6 — Commands
 • Test Category 7 — Typos / Auto-Correct
 • Begin Phase 8 — Vision (Face, Lens, Webcam)
+
+==============================
+Day 40 - Grounding + Classifier + Rewriter Audit
+==============================
+Date: 2026-09-19
+Version: v0.0.3 Alpha
+Time Planned: ~4 Hours
+Actual Time: ~5 Hours
+
+Completed:
+✓ Tested Category 5 — Weather (6/6 working after fixes)
+✓ Tested Category 6 — Commands (14/14 working)
+✓ Tested Category 7 — Typos / Auto-Correct (partial)
+✓ Fixed weather city extraction (noida, greater noida)
+✓ Fixed weather query not being spellchecked
+✓ Added show experiences, show today, show yesterday to fast commands
+✓ Added help command with full command list
+✓ Fixed show memory displaying nested dicts
+✓ Rebuilt grounding.py — strict personal patterns (word boundaries)
+✓ Rebuilt query_classifier.py — added "command" type, better fallbacks
+✓ Audited query_rewriter.py — tried SymSpell, TheFuzz, LLM approaches
+✓ Identified the "typo correction is hard" problem — needs LLM
+
+Bugs Fixed:
+✓ "what is the weather in noida" → was "nanoid" (fixed)
+✓ "how is the weather in mumbai" → was "how is the mumbai" (fixed)
+✓ "show experiences" → was going to Mem0 (fixed)
+✓ "show today" → was going to Mem0 (fixed)
+✓ "show yesterday" → was going to LLM (fixed)
+✓ "help" → was going to Mem0 (fixed)
+✓ "show memory" → was showing nested dicts (fixed)
+✓ Grounding "my " was matching substrings (fixed with word boundary)
+✓ Query classifier wasn't catching "command" type (fixed)
+✓ Over-correction by PyEnchant (partially fixed)
+✓ "frind rohan" → now corrects to "friend rohan"
+✓ "graviuy" → now corrects to "gravity"
+✓ "heelllooo" → now corrects to "hello"
+✓ "sho memory" → now corrects to "show memory"
+
+Known Issues (Fix Tomorrow):
+⚠️ "wats my favorite color" → returns "wants my favorite color" (SymSpell issue)
+⚠️ "heelllooo" → sometimes returns "heel" (frequency issue)
+⚠️ Typo correction needs LLM-based approach for semantic understanding
+⚠️ brain.py still has duplicate command handlers and needs clean rebuild
+⚠️ Query type override block conflicts with router in brain.py
+
+Architecture Improvements:
+✓ Grounding is now strict — "my" must be whole word
+✓ Query classifier has 4 types: question, statement, chat, command
+✓ Fast commands catch exact matches before router
+✓ Weather pipeline is fully working
+
+Testing Results:
+✓ Category 5 (Weather) — 6/6 working ✅
+✓ Category 6 (Commands) — 14/14 working ✅
+⚠️ Category 7 (Typos) — 3/5 working (needs LLM approach)
+
+Current Progress:
+Foundation...............100%
+Brain....................100%
+Memory...................100%
+Permanent Memory.........100%
+Mem0 Semantic Memory.....100%
+Qdrant Vector DB.........100%
+Family Memory............100%
+Friend Memory............100%
+Personal Memory..........100%
+Identity.................100%
+Permissions..............100%
+Personality...............90%
+Conversation Engine......100%
+Emotion Engine...........100%
+Context Builder..........100%
+Prompt Builder............100%
+Memory Search............100%
+Memory Ranking...........100%
+Time Awareness............100%
+Calendar Context..........100%
+Calendar Routing..........100%
+Personal Grounding........100%
+Intelligence Router.......100%
+Query Classifier..........100%
+Typo Correction...........60% (needs LLM)
+Internet Search...........100%
+SearXNG..................100%
+Maintenance Agent........100%
+Voice Output.............100%
+Voice Input..............100%
+Modes System.............100%
+Multi-Model Integration..100%
+GLiClass Router..........100%
+Self-Learning Memory.....90%
+Vision.....................0%
+Workspace Control..........0%
+Local LLM.................70%
+
+Today's Milestone:
+• Category 5 (Weather) COMPLETE
+• Category 6 (Commands) COMPLETE
+• Grounding strict (word boundary)
+• Query classifier has 4 types
+• Identified typo correction needs LLM
+• brain.py audit complete — needs rebuild
+
+Next Goal:
+• Fix typo correction (use LLM with caching)
+• Rebuild brain.py — remove duplicate handlers
+• Test Category 7 (Typos) again
+• Begin Phase 8 — Vision (Face, Lens, Webcam)

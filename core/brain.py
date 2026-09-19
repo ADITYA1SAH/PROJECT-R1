@@ -152,6 +152,66 @@ def process_command(command):
         print()
         return
 
+        # Show experiences
+    if command == "show experiences":
+        from modules.memory.experience import get_recent
+        print()
+        print("========== Recent Experiences ==========")
+        for i, exp in enumerate(get_recent(), start=1):
+            print(f"{i}. {exp}")
+        return
+
+    # Show today
+    if command == "show today":
+        from modules.memory.daily_memory import get_today
+        print()
+        print("========== Today ==========")
+        for item in get_today():
+            print("-", item)
+        return
+
+    # Show yesterday
+    if command == "show yesterday":
+        from modules.memory.daily_memory import get_yesterday
+        print()
+        print("========== Yesterday ==========")
+        yesterday = get_yesterday()
+        if not yesterday:
+            print("No memories from yesterday.")
+        else:
+            for item in yesterday:
+                print("-", item)
+        return
+
+    # Help
+    if command == "help":
+        print()
+        print("========== RAF Commands ==========")
+        print()
+        print("Memory:")
+        print("  show memory       - Show all memories")
+        print("  show family       - Show family memories")
+        print("  show experiences  - Show recent experiences")
+        print("  show today        - Show today's memories")
+        print("  show yesterday    - Show yesterday's memories")
+        print("  find <keyword>    - Search memories")
+        print("  forget <key>      - Forget a memory")
+        print()
+        print("Modes:")
+        print("  mode normal       - Default friendly mode")
+        print("  mode professional - Work mode")
+        print("  mode idle         - Minimal interaction")
+        print("  mode emergency    - Urgent mode")
+        print()
+        print("System:")
+        print("  version           - Show version info")
+        print("  show session      - Show session stats")
+        print("  export memory     - Export to Markdown")
+        print("  memory maintenance - Clean and export")
+        print("  exit              - Quit RAF")
+        print()
+        return
+
     # Memory maintenance
     if command == "memory maintenance" or command == "clean memory":
         from modules.memory.maintenance import run_maintenance
@@ -241,17 +301,17 @@ def process_command(command):
         if command in greetings:
             route = {"intent": "greeting"}
         else:
-            # Chat only → LLM, no search, no memory
             route = {"intent": "conversation"}
     elif query_type == "statement":
-        # Statement → store in Mem0 (memory handler)
         if route["intent"] not in ["memory", "friend_memory", "personal_lookup"]:
             route = {"intent": "memory"}
+            
     elif query_type == "question":
-        # Question → check memory first, then internet
-        # If route is already personal/memory, keep it
-        # Otherwise, if it's a general question, try memory first then search
-        if route["intent"] == "conversation":
+        # If it's a personal question, use personal_lookup
+        if route["intent"] in ["personal", "personal_lookup", "recall", "memory_search"]:
+            pass  # Keep as-is
+        # Otherwise → question_search (memory → internet)
+        else:
             route = {"intent": "question_search"}
 
     # =========================
@@ -327,7 +387,31 @@ def process_command(command):
         from modules.memory.mem0_memory import search_memory
         from modules.memory.permanent_memory import search_permanent
         
-        key = route["key"]
+        # Safely get the key
+        key = route.get("key")
+        if not key:
+            from modules.language.language import get_personal_lookup
+            key = get_personal_lookup(command)
+        if not key:
+            result = search(command)
+            print("RAF:", result)
+            add_message("assistant", result)
+            if VOICE_ENABLED:
+                speak(result)
+            return
+
+        if not key:
+            # Try to extract from command
+            from modules.language.language import get_personal_lookup
+            key = get_personal_lookup(command)
+        if not key:
+            # Final fallback: search
+            result = search(command)
+            print("RAF:", result)
+            add_message("assistant", result)
+            if VOICE_ENABLED:
+                speak(result)
+            return
         response = None
         
         # =========================

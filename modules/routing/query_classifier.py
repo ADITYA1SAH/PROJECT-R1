@@ -9,14 +9,63 @@ import re
 def classify_query(query):
     """
     Classify a query as:
-    - "question"  → asking for information (needs search/memory)
-    - "statement" → sharing information (needs storage)
-    - "chat"      → casual conversation (LLM only)
+    - "question"  → asking for information
+    - "statement" → sharing information
+    - "chat"      → casual conversation
+    - "command"   → explicit command (show memory, version, etc.)
     """
     query_lower = query.lower().strip()
     
     # =========================
-    # QUESTION PATTERNS
+    # COMMANDS — highest priority
+    # =========================
+    command_patterns = [
+        r"^show\s+",
+        r"^find\s+",
+        r"^forget\s+",
+        r"^remember\s+",
+        r"^mode\s+",
+        r"^export\s+",
+        r"^memory\s+maintenance",
+        r"^clean\s+memory",
+        r"^version$",
+        r"^help$",
+        r"^exit$",
+    ]
+    for pattern in command_patterns:
+        if re.match(pattern, query_lower):
+            return "command"
+    
+    # =========================
+    # CHAT — greetings/casual only (exact match)
+    # =========================
+    chat_exact = [
+        "hi", "hello", "hey", "yo",
+        "good morning", "good afternoon", "good evening", "good night",
+        "thanks", "thank you", "ok", "okay", "cool", "nice",
+        "lol", "haha", "bye", "goodbye",
+    ]
+    if query_lower.rstrip("!?.") in chat_exact:
+        return "chat"
+    
+    # =========================
+    # STATEMENTS — sharing info
+    # =========================
+    statement_patterns = [
+        r"^my\s+",
+        r"^i\s+am\s+", r"^i'm\s+",
+        r"^i\s+have\s+", r"^i\s+like\s+",
+        r"^i\s+love\s+", r"^i\s+hate\s+",
+        r"^this\s+is\s+", r"^that\s+is\s+",
+    ]
+    for pattern in statement_patterns:
+        if re.match(pattern, query_lower):
+            # But not if it ends with ? (e.g., "my name is?" — rare)
+            if not query.strip().endswith("?"):
+                return "statement"
+    
+    # =========================
+    # QUESTIONS — asking for info
     # =========================
     question_patterns = [
         r"^who\s+", r"^what\s+", r"^when\s+", r"^where\s+",
@@ -37,30 +86,14 @@ def classify_query(query):
         return "question"
     
     # =========================
-    # STATEMENT PATTERNS (sharing info)
+    # INFO KEYWORDS — treat as question
     # =========================
-    statement_patterns = [
-        r"^my\s+", r"^i\s+am\s+", r"^i'm\s+", r"^i\s+have\s+",
-        r"^i\s+like\s+", r"^i\s+love\s+", r"^i\s+hate\s+",
-        r"^remember\s+", r"^note\s+", r"^save\s+",
-        r"^this\s+is\s+", r"^that\s+is\s+",
-    ]
-    for pattern in statement_patterns:
-        if re.match(pattern, query_lower):
-            return "statement"
+    info_keywords = ["weather", "temperature", "news", "price"]
+    for keyword in info_keywords:
+        if keyword in query_lower:
+            return "question"
     
     # =========================
-    # CHAT (default for greetings, casual)
+    # DEFAULT — chat (safe fallback for unmatched)
     # =========================
-    chat_patterns = [
-        r"^hi\b", r"^hello\b", r"^hey\b", r"^yo\b",
-        r"^good\s+", r"^thanks\b", r"^thank\s+you\b",
-        r"^ok\b", r"^okay\b", r"^cool\b", r"^nice\b",
-        r"^lol\b", r"^haha\b",
-    ]
-    for pattern in chat_patterns:
-        if re.match(pattern, query_lower):
-            return "chat"
-    
-    # Default: chat (safe fallback)
     return "chat"
