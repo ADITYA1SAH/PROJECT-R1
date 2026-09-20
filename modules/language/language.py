@@ -2,6 +2,7 @@ import re
 
 
 def get_memory_statement(command):
+    # Pattern 1: "my X is Y" (standard)
     match = re.match(r"my (.+) is (.+)", command)
     if match:
         key = match.group(1).strip().replace(" ", "_")
@@ -11,6 +12,29 @@ def get_memory_statement(command):
             "key": key,
             "value": value
         }
+    
+    # Pattern 2: "my friend X is Y" — capture as "friend_X"
+    match = re.match(r"my friend (\w+) is (.+)", command)
+    if match:
+        friend_name = match.group(1).strip()
+        value = match.group(2).strip()
+        return {
+            "intent": "remember",
+            "key": f"friend_{friend_name.lower()}",
+            "value": value
+        }
+    
+    # Pattern 3: "my friend X loves Y" — capture as "friend_X_loves"
+    match = re.match(r"my friend (\w+) loves? (.+)", command)
+    if match:
+        friend_name = match.group(1).strip()
+        what = match.group(2).strip()
+        return {
+            "intent": "remember",
+            "key": f"friend_{friend_name.lower()}",
+            "value": f"loves {what}"
+        }
+    
     return None
 
 

@@ -97,5 +97,8 @@ def start():
             print("Goodbye!")
             return
 
-        add_message(command)
+        # Auto-correct BEFORE processing
+        from modules.language.query_rewriter import rewrite_query
+        command = rewrite_query(command)
+
         process_command(command)

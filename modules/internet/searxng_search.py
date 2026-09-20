@@ -45,6 +45,14 @@ def searxng_search(query, num_results=5):
                 match = re.search(r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\s+(?:is|was|has been|became)', content)
                 if match:
                     return match.group(1)
+
+        # Strip "Profile " prefix from titles
+        for result in results[:5]:
+            title = result.get("title", "")
+            if title.startswith("Profile "):
+                title = title[8:].strip()
+            if title and len(title) < 60:
+                return title
         
         # For "what is the capital of X"
         if "capital of" in query.lower():

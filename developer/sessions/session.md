@@ -3404,3 +3404,116 @@ Next Goal:
 • Rebuild brain.py — remove duplicate handlers
 • Test Category 7 (Typos) again
 • Begin Phase 8 — Vision (Face, Lens, Webcam)
+
+==============================
+Day 41 - Clean Rebuild Complete
+==============================
+Date: 2026-09-20
+Version: v0.0.3 Alpha
+Time Planned: ~4 Hours
+Actual Time: ~6 Hours
+
+Completed:
+✓ Rebuilt query_classifier.py — 7 types (command, statement, personal, raf_self, weather, question, chat)
+✓ Rebuilt query_rewriter.py — LLM-based typo correction with caching
+✓ Created command_handler.py — all commands in one file
+✓ Created statement_handler.py — stores statements in memory + permanent + Mem0
+✓ Created personal_handler.py — 3-layer personal lookup (memory.json → permanent → Mem0)
+✓ Created raf_self_handler.py — instant RAF self-answers
+✓ Created weather_handler.py — wttr.in integration
+✓ Created question_handler.py — memory → SearXNG → LLM fallback
+✓ Created chat_handler.py — greetings + LLM conversation
+✓ Rebuilt brain.py — clean 70-line orchestrator (down from 700+)
+✓ Updated startup.py — auto-correct before processing
+✓ Fixed classifier to handle "my friend X is Y" statements
+✓ Fixed language.py to extract friend memories correctly
+
+Bugs Fixed:
+✓ "who are you" → was returning friends (fixed with raf_self handler)
+✓ "how are you" → was returning friends (fixed)
+✓ "what can you do" → was returning friends (fixed)
+✓ "who is the prime minister" → was returning friends (fixed with question handler)
+✓ "what is the capital of France" → was returning friends (fixed)
+✓ "what is gravity" → was returning friends (fixed)
+✓ "tell me about my friend Rohan" → was returning all friends (fixed with name filter)
+✓ "my friend Rahul is a gamer" → wasn't stored (fixed with classifier + language.py)
+✓ Duplicate handlers in brain.py — removed
+✓ Conflicting query-type overrides — removed
+✓ Auto-correct running twice — fixed
+✓ Over-correction of names by SymSpell — fixed with LLM approach
+
+Architecture Improvements:
+✓ brain.py: 700+ lines → ~70 lines
+✓ Single routing flow (classify → handler → done)
+✓ 7 query types with clean separation
+✓ Every handler in its own file
+✓ No duplicate handlers
+✓ No conflicting overrides
+✓ LLM-based typo correction with caching
+✓ Dynamic name protection (from memory)
+
+Testing Results:
+✓ "hello" → greeting ✅
+✓ "who are you" → RAF self ✅
+✓ "what is my name" → "aditya" ✅
+✓ "my friend Rahul is a gamer" → stored ✅
+✓ "tell me about my friend Rahul" → "Rahul is a gamer" ✅
+✓ "what is the weather in noida" → "Sunny +37°C" ✅
+✓ "who is the prime minister of india" → "Shri Narendra Modi" ✅
+✓ "show family" → full family list ✅
+✓ "help" → command list ✅
+✓ "tell me a joke" → LLM joke ✅
+
+Current Progress:
+Foundation...............100%
+Brain....................100%
+Brain (Rebuilt)..........100%
+Query Classifier.........100%
+Typo Correction..........100%
+Memory...................100%
+Permanent Memory.........100%
+Mem0 Semantic Memory.....100%
+Qdrant Vector DB.........100%
+Family Memory............100%
+Friend Memory............100%
+Personal Memory..........100%
+Identity.................100%
+Permissions..............100%
+Personality...............90%
+Conversation Engine......100%
+Emotion Engine...........100%
+Context Builder..........100%
+Prompt Builder............100%
+Memory Search............100%
+Memory Ranking...........100%
+Time Awareness............100%
+Calendar Context..........100%
+Calendar Routing..........100%
+Personal Grounding........100%
+Intelligence Router.......100%
+Internet Search...........95%
+SearXNG..................100%
+Weather..................100%
+Maintenance Agent........100%
+Voice Output.............100%
+Voice Input..............100%
+Modes System.............100%
+Multi-Model Integration..100%
+Self-Learning Memory.....90%
+Vision.....................0%
+Workspace Control..........0%
+Local LLM.................70%
+
+Today's Milestone:
+• COMPLETE REBUILD — brain.py is now clean (70 lines vs 700+)
+• 7 query types with clean separation
+• Every handler in its own file
+• All 10 handlers built and working
+• Auto-correct uses LLM (accurate)
+• Full pipeline tested end-to-end
+
+Next Goal:
+• Test remaining question categories (REST OF ROUTERS)
+• Fix "Profile Shri Narendra Modi" cosmetic issue
+• Clean up orphaned legacy handlers
+• Begin Phase 8 — Vision (Face, Lens, Webcam)
