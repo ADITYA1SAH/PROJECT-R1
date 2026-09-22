@@ -3517,3 +3517,106 @@ Next Goal:
 • Fix "Profile Shri Narendra Modi" cosmetic issue
 • Clean up orphaned legacy handlers
 • Begin Phase 8 — Vision (Face, Lens, Webcam)
+
+==============================
+Day 42 - SearXNG Fix + Orphan Cleanup
+==============================
+Date: 2026-09-22
+Version: v0.0.3 Alpha
+Time Planned: ~4 Hours
+Actual Time: ~5 Hours
+
+Completed:
+✓ Fixed "Profile Shri Narendra Modi" cosmetic issue
+✓ Rewrote searxng_search.py with LLM-based answer extraction
+✓ Added LLM extraction with few-shot examples for better answers
+✓ Fixed cache to only store short, direct answers (not definitions)
+✓ Deleted 10 orphaned legacy handlers (safe cleanup)
+✓ Tested full pipeline — all 7 query types working
+✓ Tested 10 normal conversation questions
+✓ Tested 9 internet celebrity questions
+✓ Identified classifier over-triggering issues for future fix
+
+Bugs Fixed:
+✓ "Profile Shri Narendra Modi" → now "Narendra Modi"
+✓ SearXNG returning titles instead of answers — fixed with LLM extraction
+✓ Cache storing definitions — fixed with length/pattern check
+✓ Orphaned handlers cluttering core/handlers/ — deleted
+✓ "who is the prime minister of india" now returns correct name
+
+Architecture Improvements:
+✓ SearXNG extraction uses Phi-3.5-mini LLM for context-aware answers
+✓ Cache only stores direct answers (< 100 chars, no "the/a/an" prefix)
+✓ Deleted orphaned handlers: conversation, greeting, mood, unknown, emotion, last_message, identity, override, recall, core/router
+✓ core/handlers/ is now clean (only active handlers remain)
+
+Testing Results:
+✓ Family questions → Working ✅
+✓ Personal memory → Working ✅
+✓ RAF self-questions → Working ✅
+✓ Search (PM, capital, celebrities) → Working (some extraction issues) ✅
+✓ Weather → Working ✅
+✓ Commands → Working ✅
+✓ Statements → Working ✅
+✓ Normal conversation → Partially working ⚠️ (classifier over-triggers)
+✓ Internet celebrities → Working (some extraction issues) ⚠️
+
+Known Issues (Fix Tomorrow):
+⚠️ "tell me something interesting" → leaks into memory (should be chat)
+⚠️ "what's your favorite thing about being raf" → misclassified as personal
+⚠️ "do you like talking to me" → web snippet leaked
+⚠️ "what makes you happy" → returns date from web
+⚠️ "good night" → returns "Hey Aditya!" (should be night greeting)
+⚠️ Some celebrity extraction grabs wrong sentence (Cristiano, Taylor Swift, etc.)
+
+Current Progress:
+Foundation...............100%
+Brain....................100%
+Brain (Rebuilt)..........100%
+Query Classifier.........95%
+Typo Correction..........100%
+Memory...................100%
+Permanent Memory.........100%
+Mem0 Semantic Memory.....100%
+Qdrant Vector DB.........100%
+Family Memory............100%
+Friend Memory............100%
+Personal Memory..........100%
+Identity.................100%
+Permissions..............100%
+Personality...............90%
+Conversation Engine......100%
+Emotion Engine...........100%
+Context Builder..........100%
+Prompt Builder............100%
+Memory Search............100%
+Memory Ranking...........100%
+Time Awareness............100%
+Calendar Context..........100%
+Calendar Routing..........100%
+Personal Grounding........100%
+Intelligence Router.......100%
+Internet Search...........95%
+SearXNG..................95%
+Weather..................100%
+Maintenance Agent........100%
+Voice Output.............100%
+Voice Input..............100%
+Modes System.............100%
+Multi-Model Integration..100%
+Self-Learning Memory.....90%
+Vision.....................0%
+Workspace Control..........0%
+Local LLM.................70%
+
+Today's Milestone:
+• SearXNG extraction is now LLM-based (much better answers)
+• Deleted 10 orphaned handlers — codebase is cleaner
+• Full pipeline works for all 7 query types
+• Identified classifier over-triggering for tomorrow's fix
+
+Next Goal:
+• Fix query classifier — chat patterns over-triggering
+• Fix "good night" greeting
+• Improve SearXNG celebrity extraction (identity statements)
+• Begin Phase 8 — Vision (Face, Lens, Webcam)
