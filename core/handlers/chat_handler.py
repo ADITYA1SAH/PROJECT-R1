@@ -18,13 +18,25 @@ def handle_chat(command):
     # =========================
     # GREETINGS — exact match
     # =========================
-    greetings = {
-        "hi", "hello", "hey", "yo", "sup", "wassup",
-        "good morning", "good afternoon", "good evening", "good night",
-    }
-    
     # Strip punctuation
     clean = command.rstrip("?!.,").strip()
+    
+    # Time-specific greetings
+    time_greetings = {
+        "good morning": ["Good morning, bro!", "Morning! Ready to start the day?", "Hey, good morning!"],
+        "good afternoon": ["Good afternoon!", "Hey, hope your day's going well.", "Afternoon, bro!"],
+        "good evening": ["Good evening!", "Hey, evening vibes!", "Good evening, Aditya."],
+        "good night": ["Good night, bro! Sleep well.", "Night! Rest up.", "Sweet dreams, Aditya."],
+    }
+    
+    if clean in time_greetings:
+        import random
+        response = random.choice(time_greetings[clean])
+        _reply(response)
+        return True
+    
+    # General greetings
+    greetings = {"hi", "hello", "hey", "yo", "sup", "wassup"}
     
     if clean in greetings:
         from modules.personality.responses import random_greeting

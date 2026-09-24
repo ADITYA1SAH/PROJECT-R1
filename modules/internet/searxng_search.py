@@ -6,6 +6,7 @@ Uses LLM to extract the answer from search results.
 
 import requests
 import json
+import re
 
 SEARXNG_URL = "http://localhost:8080/search"
 OLLAMA_URL = "http://localhost:11434/api/generate"
@@ -19,7 +20,6 @@ def searxng_search(query, num_results=5):
     """
     Search via SearXNG, then use LLM to extract the answer.
     """
-    # Check cache
     if query in _search_cache:
         return _search_cache[query]
     
@@ -41,9 +41,7 @@ def searxng_search(query, num_results=5):
         if not results:
             return None
         
-        # =========================
         # Build context from top results
-        # =========================
         context_parts = []
         for i, r in enumerate(results[:num_results], 1):
             title = r.get("title", "").strip()
@@ -56,22 +54,15 @@ def searxng_search(query, num_results=5):
         
         context = "\n".join(context_parts)
         
-        # =========================
-        # Ask LLM to extract answer
-        # =========================
+        # Extract answer with LLM
         answer = _extract_with_llm(query, context)
         
         if answer:
-            # Only cache short, direct answers (not definitions)
-            is_short = len(answer) < 100
-            is_definition = answer.lower().startswith(("the ", "a ", "an "))
-            if is_short and not is_definition:
+            if len(answer) < 150:
                 _search_cache[query] = answer
             return answer
         
-        # =========================
         # Fallback: first content sentence
-        # =========================
         first_content = results[0].get("content", "").strip()
         if first_content:
             fallback = first_content.split(".")[0] + "."
@@ -87,46 +78,44 @@ def searxng_search(query, num_results=5):
 
 def _extract_with_llm(query, context):
     """
-    Use Ollama to extract a short, direct answer from search results.
+    Use Ollama to extract a clean answer from search results.
     """
     try:
-        prompt = f"""You are an answer extractor. Given a question and search results, provide the best short answer.
+        prompt = f"""You extract answers from search results. Be brief and accurate.
 
-Rules:
-- Keep answers SHORT: 1-2 sentences max
-- For "who is X" questions: give a 1-sentence description (who they are)
-- For "what is X" questions: give a 1-sentence definition
-- For "where is X" or "capital of X": give the location/place
-- For "when is X": give the date
-- For "who is the current X" (PM, president, etc.): give the NAME only
-- Only use information from the search results
-- Do NOT add "According to..." or "The answer is..."
-- If the results don't contain the answer, say "UNKNOWN"
+STRICT RULES:
+1. For "who is X" / "who was X": Extract the sentence that IDENTIFIES X (who they are, what they do). The sentence MUST start with the person's name. Do NOT use "He is..." or "She is..." — always use the full name.
+2. For "who is the current X" (prime minister, president, etc.): Return ONLY the name.
+3. For "what is X": Give a 1-sentence definition.
+4. For "what is the capital of X": Return ONLY the city name.
+5. For "what is the tallest/largest/biggest X": Return ONLY the answer.
+6. For "when is X": Return ONLY the date.
+7. Do NOT add "According to..." or "The answer is..."
+8. If the answer isn't in the results, say "UNKNOWN".
 
-Examples:
-Question: who is the prime minister of india
-Results: [1] Narendra Modi is the 14th Prime Minister of India...
-Answer: Narendra Modi
+EXAMPLES:
 
 Question: who is elon musk
-Results: [1] Elon Musk is a billionaire entrepreneur and CEO of Tesla and SpaceX...
-Answer: Elon Musk is a billionaire entrepreneur and CEO of Tesla and SpaceX.
+Answer: Elon Musk is a billionaire entrepreneur and CEO of Tesla, SpaceX, X, and Neuralink.
+
+Question: who is the prime minister of india
+Answer: Narendra Modi
+
+Question: who is cristiano ronaldo
+Answer: Cristiano Ronaldo is a Portuguese professional footballer who plays as a forward.
 
 Question: what is the capital of france
-Results: [1] Paris is the capital of France...
 Answer: Paris
 
 Question: what is gravity
-Results: [1] Gravity is a fundamental force that attracts objects...
 Answer: Gravity is a fundamental force that attracts objects toward each other.
 
-Question: what is the tallest mountain in the world
-Results: [1] Mount Everest is the tallest mountain above sea level...
-Answer: Mount Everest
+Question: who is taylor swift
+Answer: Taylor Swift is an American singer-songwriter.
 
 Now:
 Question: {query}
-Results: {context[:1500]}
+Results: {context[:1800]}
 Answer:"""
         
         response = requests.post(
@@ -137,11 +126,11 @@ Answer:"""
                 "stream": False,
                 "options": {
                     "num_gpu": 0,
-                    "num_ctx": 1024,
+                    "num_ctx": 2048,
                     "temperature": 0.0
                 }
             },
-            timeout=20
+            timeout=45
         )
         
         data = response.json()
@@ -149,8 +138,6 @@ Answer:"""
             return None
         
         answer = data["response"].strip()
-        
-        # Clean up
         answer = answer.split("\n")[0].strip()
         answer = answer.strip('"').strip("'").strip()
         if answer.startswith("Answer:"):
@@ -159,12 +146,33 @@ Answer:"""
         # Reject bad answers
         if not answer or answer.upper() == "UNKNOWN":
             return None
-        if len(answer) > 200:
+        if len(answer) > 300:
             return None
+        if answer.lower().startswith(("the film", "the movie", "the series")):
+            return None
+        
+        # =========================
+        # POST-PROCESS: Fix pronoun-starting answers
+        # =========================
+        # Extract the name from query
+        name_match = re.search(r'who\s+is\s+(.+?)(?:\?|$)', query.lower())
+        if name_match:
+            name = name_match.group(1).strip().rstrip("?")
+            name = " ".join(w.capitalize() for w in name.split())
+            
+            # Check if answer starts with a pronoun
+            first_word = answer.split()[0].lower().rstrip(",") if answer.split() else ""
+            
+            if first_word in ["he", "she", "they", "it", "his", "her", "him", "them"]:
+                # Replace the pronoun with the name
+                # Handle both "He is..." and "He remains..." cases
+                rest = " ".join(answer.split()[1:])
+                answer = f"{name} {rest}"
         
         return answer
     
-    except Exception:
+    except Exception as e:
+        print(f"⚠️ Extraction error: {e}")
         return None
 
 

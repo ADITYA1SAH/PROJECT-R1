@@ -67,7 +67,7 @@ STATEMENT_PATTERNS = [
 
 
 # =========================
-# PERSONAL PATTERNS (asking about Aditya)
+# PERSONAL PATTERNS (asking about Aditya — must have "my" or "me")
 # =========================
 PERSONAL_PATTERNS = [
     r"\bmy\s+\w+",              # "my name", "my dad", "my school"
@@ -105,6 +105,30 @@ RAF_SELF_PATTERNS = [
     r"\bare\s+you\s+online\b",
     r"\bdo\s+you\s+have\s+internet\b",
     r"\bcan\s+you\s+search\s+the\s+web\b",
+    r"\byour\s+favorite\s+thing\b",
+    r"\babout\s+being\s+raf\b",
+    r"\babout\s+yourself\b",
+]
+
+
+# =========================
+# CHAT PATTERNS (opinions, feelings, casual)
+# =========================
+CHAT_PATTERNS = [
+    r"^tell\s+me\s+something\b",         # "tell me something interesting"
+    r"^tell\s+me\s+a\s+",                # "tell me a joke"
+    r"^do\s+you\s+like\b",               # "do you like talking to me"
+    r"^do\s+you\s+think\b",              # "do you think I should..."
+    r"^what\s+do\s+you\s+think\b",       # "what do you think about X"
+    r"^what\s+makes\s+you\b",            # "what makes you happy"
+    r"^what\s+should\s+i\b",             # "what should i do today"
+    r"^how\s+do\s+you\s+feel\b",         # "how do you feel about X"
+    r"^what\s+would\s+you\b",            # "what would you do"
+    r"^can\s+you\s+tell\s+me\s+a\b",     # "can you tell me a story"
+    r"^give\s+me\s+advice\b",            # "give me advice"
+    r"^i\s+feel\b",                      # "i feel happy"
+    r"^i\s+think\b",                     # "i think that..."
+    r"^i\s+want\s+to\s+talk\b",          # "i want to talk"
 ]
 
 
@@ -118,12 +142,16 @@ WEATHER_KEYWORDS = ["weather", "temperature"]
 # QUESTION PATTERNS
 # =========================
 QUESTION_STARTERS = [
-    r"^who\s+", r"^what\s+", r"^when\s+", r"^where\s+",
-    r"^why\s+", r"^how\s+", r"^which\s+", r"^whose\s+",
+    r"^who\s+is\b", r"^who\s+was\b", r"^who\s+are\b",
+    r"^what\s+is\b", r"^what\s+are\b", r"^what\s+was\b",
+    r"^when\s+is\b", r"^when\s+was\b",
+    r"^where\s+is\b", r"^where\s+was\b",
+    r"^why\s+is\b", r"^why\s+do\b",
+    r"^how\s+does\b", r"^how\s+do\b",
+    r"^which\s+", r"^whose\s+",
     r"^is\s+", r"^are\s+", r"^was\s+", r"^were\s+",
-    r"^do\s+", r"^does\s+", r"^did\s+",
-    r"^can\s+", r"^could\s+", r"^would\s+", r"^should\s+",
-    r"^tell\s+me\s+about\s+",  # "tell me about X" (not "my X")
+    r"^does\s+", r"^did\s+",
+    r"^can\s+you\s+tell\s+me\s+about\s+",  # "can you tell me about X"
     r"^explain\s+", r"^describe\s+",
     r"^what's\s+", r"^who's\s+", r"^where's\s+",
     r"^how's\s+", r"^when's\s+",
@@ -133,7 +161,7 @@ QUESTION_STARTERS = [
 def classify_query(query):
     """
     Classify a query into one of 7 types.
-    Priority order: command → chat → statement → personal → raf_self → weather → question → chat
+    Priority: command → chat → statement → personal → raf_self → weather → question → chat
     """
     if not query or not query.strip():
         return "chat"
@@ -151,53 +179,58 @@ def classify_query(query):
             return "command"
     
     # =========================
-    # 2. CHAT (exact match only)
+    # 2. CHAT (exact match — greetings)
     # =========================
     if q_clean in CHAT_EXACT:
         return "chat"
     
     # =========================
-    # 3. STATEMENT (sharing info)
+    # 3. CHAT PATTERNS (opinions, feelings, casual questions)
+    # =========================
+    for pattern in CHAT_PATTERNS:
+        if re.match(pattern, q):
+            return "chat"
+    
+    # =========================
+    # 4. STATEMENT (sharing info)
     # =========================
     for pattern in STATEMENT_PATTERNS:
         if re.match(pattern, q):
-            # Not a statement if it ends with "?"
             if not q.endswith("?"):
                 return "statement"
     
     # =========================
-    # 4. PERSONAL (about Aditya)
+    # 5. PERSONAL (about Aditya)
     # =========================
     for pattern in PERSONAL_PATTERNS:
         if re.search(pattern, q):
             return "personal"
     
     # =========================
-    # 5. RAF SELF (about RAF)
+    # 6. RAF SELF (about RAF)
     # =========================
     for pattern in RAF_SELF_PATTERNS:
         if re.search(pattern, q):
             return "raf_self"
     
     # =========================
-    # 6. WEATHER
+    # 7. WEATHER
     # =========================
     for keyword in WEATHER_KEYWORDS:
         if keyword in q:
             return "weather"
     
     # =========================
-    # 7. QUESTION (factual)
+    # 8. QUESTION (factual)
     # =========================
     for pattern in QUESTION_STARTERS:
         if re.match(pattern, q):
             return "question"
     
-    # Ends with question mark → question
     if q.endswith("?"):
         return "question"
     
     # =========================
-    # 8. DEFAULT → chat
+    # 9. DEFAULT → chat
     # =========================
     return "chat"
