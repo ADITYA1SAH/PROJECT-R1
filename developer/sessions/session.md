@@ -3726,7 +3726,113 @@ Today's Milestone:
 • SearXNG extraction improved from ~60% to ~90% accuracy
 • Celebrity bios are now full sentences (not just names)
 
+
 Next Goal:
 • Test remaining categories (full regression)
 • Fix MrBeast short extraction (minor)
+• Begin Phase 8 — Vision (Face, Lens, Webcam)
+
+==============================
+Day 44 - Speed Optimization + Bug Fixes
+==============================
+Date: 2026-09-28
+Version: v0.0.3 Alpha
+Time Planned: ~4 Hours
+Actual Time: ~4 Hours
+
+Completed:
+✓ Full regression test — found 14 issues across categories
+✓ Speed: Skip LLM typo correction for short queries (1-2 words)
+✓ Speed: Added disk-based cache for query rewriter
+✓ Speed: Cache persists across sessions
+✓ Fixed: `where do i live` key extraction
+✓ Fixed: `do you remember my grandfather` personal lookup
+✓ Fixed: `who is taylor swift` truncated to "Taylor Swift ."
+✓ Fixed: `my sister is Ananyawat is my name` greedy regex
+✓ Deleted __pycache__ (lesson learned — important for module reload)
+✓ Post-processing to fix pronoun-starting answers
+
+Bugs Fixed:
+✓ "where do i live" → now returns my_location key
+✓ "where am i" → now returns my_location key
+✓ "do you remember my grandfather" → now returns my_grandfather key
+✓ "tell me about my dad" → now returns my_dad key
+✓ "who is taylor swift" → now returns full bio
+✓ "my sister is Ananyawat is my name" → now parses correctly
+✓ Disk cache persists across Python processes
+✓ Short queries (1-2 words) skip LLM (instant)
+
+Architecture Improvements:
+✓ In-memory + disk-based caching for query rewriter
+✓ Validation layer (_is_valid_answer) for SearXNG extraction
+✓ Fallback loops through top 3 results for better answer extraction
+✓ Special-case mapping for common personal questions
+✓ Extended prefix patterns for personal lookup
+
+Testing Results:
+✓ "graviuy" → "gravity" in 0.00s ✅
+✓ "tell me about my frind rohan" → correct in 2.64s (first) / 0.00s (cached) ✅
+✓ "where do i live" → my_location ✅
+✓ "do you remember my grandfather" → my_grandfather ✅
+✓ "who is taylor swift" → "Taylor Swift is an American singer-songwriter." ✅
+✓ "my sister is Ananya" → stored correctly ✅
+✓ Disk cache works across sessions ✅
+
+Known Issues (Fix Later):
+⚠️ Joe Biden extraction sometimes gets wrong sentence
+⚠️ MrBeast extraction too short (just "Jimmy Donaldson")
+⚠️ Some LLM queries timeout at 45s (rare)
+⚠️ Mem0 telemetry warning (cosmetic)
+
+Current Progress:
+Foundation...............100%
+Brain....................100%
+Brain (Rebuilt)..........100%
+Query Classifier.........100%
+Chat Patterns............100%
+Typo Correction..........100%
+Typo Caching............100%
+Memory...................100%
+Permanent Memory.........100%
+Mem0 Semantic Memory.....100%
+Qdrant Vector DB.........100%
+Family Memory............100%
+Friend Memory............100%
+Personal Memory..........100%
+Identity.................100%
+Permissions..............100%
+Personality...............90%
+Conversation Engine......100%
+Emotion Engine...........100%
+Context Builder..........100%
+Prompt Builder............100%
+Memory Search............100%
+Memory Ranking...........100%
+Time Awareness............100%
+Calendar Context..........100%
+Calendar Routing..........100%
+Personal Grounding........100%
+Intelligence Router.......100%
+Internet Search...........97%
+SearXNG..................97%
+Weather..................100%
+Maintenance Agent........100%
+Voice Output.............100%
+Voice Input..............100%
+Modes System.............100%
+Multi-Model Integration..100%
+Self-Learning Memory.....90%
+Vision.....................0%
+Workspace Control..........0%
+Local LLM.................70%
+
+Today's Milestone:
+• Speed optimization: short queries skip LLM
+• Disk cache persists across sessions
+• Several personal lookup bugs fixed
+• SearXNG truncation fixed
+• Cleaned __pycache__ (fresh code loaded)
+
+Next Goal:
+• Full regression test again (verify all fixes)
 • Begin Phase 8 — Vision (Face, Lens, Webcam)

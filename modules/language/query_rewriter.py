@@ -1,28 +1,44 @@
 """
 Query Rewriter for PROJECT R1
-Uses Ollama (Phi-3.5-mini) for typo correction with caching.
+Uses Ollama (LLM) for typo correction with caching.
 Falls back to SymSpell if LLM fails.
 """
 
 import re
 import requests
 import contractions
+import json
+import os
 
-# =========================
-# Ollama Config
-# =========================
+CACHE_FILE = "data/rewrite_cache.json"
+
+def _load_disk_cache():
+    """Load the rewrite cache from disk."""
+    if os.path.exists(CACHE_FILE):
+        try:
+            with open(CACHE_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
+
+def _save_disk_cache():
+    """Save the rewrite cache to disk."""
+    try:
+        os.makedirs("data", exist_ok=True)
+        with open(CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump(_REWRITE_CACHE, f, indent=2)
+    except Exception:
+        pass
+
 OLLAMA_URL = "http://localhost:11434/api/generate"
 CORRECTION_MODEL = "phi3:3.8b-mini-4k-instruct-q5_K_M"
 LLM_TIMEOUT = 20
 
-# =========================
-# Cache
-# =========================
-CORRECTION_CACHE = {}
+# Caches
+CORRECTION_CACHE = {}                    # LLM result cache
+_REWRITE_CACHE = _load_disk_cache()      # Full rewrite cache (persisted to disk)
 
-# =========================
-# Skip LLM for these (exact match)
-# =========================
 SKIP_LLM_EXACT = {
     "hi", "hello", "hey", "yo", "sup",
     "good morning", "good afternoon", "good evening", "good night",
@@ -34,9 +50,7 @@ SKIP_LLM_EXACT = {
 }
 
 
-# =========================
-# Fallback: SymSpell (if LLM fails)
-# =========================
+# SymSpell fallback
 try:
     from symspellpy import SymSpell, Verbosity
     import os
@@ -53,11 +67,8 @@ except Exception:
 
 
 def get_protected_words():
-    """
-    Dynamically protect names/cities from memory at runtime.
-    """
+    """Read names/cities from memory at runtime."""
     protected = set()
-    
     try:
         from modules.memory.memory import load_memory
         for key, value in load_memory().items():
@@ -73,7 +84,6 @@ def get_protected_words():
                             protected.add(word)
     except Exception:
         pass
-    
     try:
         from modules.memory.permanent_memory import load_permanent
         for m in load_permanent():
@@ -82,14 +92,15 @@ def get_protected_words():
                     protected.add(word)
     except Exception:
         pass
-    
     return protected
 
 
 def fix_with_llm(query):
-    """
-    Use Ollama to fix typos. Returns corrected query or None on failure.
-    """
+    """Use Ollama to fix typos."""
+    # Check LLM cache
+    if query in CORRECTION_CACHE:
+        return CORRECTION_CACHE[query]
+    
     try:
         prompt = f"""You are a spelling corrector. Fix typos only. Do NOT change meaning, do NOT add punctuation, do NOT add quotes, do NOT explain.
 
@@ -111,12 +122,6 @@ Output: show memory
 
 Input: tell me about my frind rohan
 Output: tell me about my friend rohan
-
-Input: who is elon musk
-Output: who is elon musk
-
-Input: what is my mom's name
-Output: what is my mom's name
 
 Now correct this:
 Input: {query}
@@ -142,54 +147,37 @@ Output:"""
         data = response.json()
         if "response" in data:
             corrected = data["response"].strip()
-            # Only take first line
             corrected = corrected.split("\n")[0].strip()
-            # Remove prefixes the LLM might add
             for prefix in ["Output:", "output:", "Corrected:", "corrected:"]:
                 if corrected.startswith(prefix):
                     corrected = corrected[len(prefix):].strip()
-            # Remove quotes
             corrected = corrected.strip('"').strip("'").strip()
-            # Remove trailing punctuation
             corrected = corrected.rstrip("?.!,").strip()
             
-            # Validate
-            if not corrected:
-                return None
-            if len(corrected) > len(query) * 2:
-                return None
-            if len(corrected.split()) < len(query.split()) * 0.5:
-                return None
-            
-            return corrected.lower()
-    except Exception as e:
-        print(f"⚠️ LLM correction failed: {e}")
-    
+            if corrected and len(corrected) < len(query) * 2:
+                result = corrected.lower()
+                CORRECTION_CACHE[query] = result  # Cache LLM result
+                return result
+    except Exception:
+        pass
     return None
 
 
 def fix_with_symspell(query, protected_words):
-    """
-    Fallback: SymSpell-based typo correction.
-    """
+    """Fallback: SymSpell-based typo correction."""
     if not SYMSPELL_AVAILABLE:
         return query
     
     words = query.split()
     corrected = []
-    
     for word in words:
-        # Skip short words, numbers, protected
         if len(word) <= 2 or word.isdigit() or word in protected_words:
             corrected.append(word)
             continue
-        
-        # Try collapse (heelloo → helo → hello)
         collapsed = re.sub(r'(.)\1+', r'\1', word)
         if sym_spell.words and collapsed in sym_spell.words:
             corrected.append(collapsed)
             continue
-        
         suggestions = sym_spell.lookup(
             word, Verbosity.CLOSEST, max_edit_distance=2, include_unknown=True
         )
@@ -197,42 +185,57 @@ def fix_with_symspell(query, protected_words):
             corrected.append(suggestions[0].term)
         else:
             corrected.append(word)
-    
     return " ".join(corrected)
 
 
 def rewrite_query(query):
     """
-    Rewrite query:
-    1. Expand contractions (fast)
-    2. Fix repeated characters (fast)
-    3. Try LLM correction
-    4. Fallback to SymSpell if LLM fails
+    Rewrite query with full caching.
     """
     query = query.lower().strip()
     
     if not query:
         return query
     
-    # Step 1: Expand contractions
+    # Check full rewrite cache FIRST
+    if query in _REWRITE_CACHE:
+        return _REWRITE_CACHE[query]
+    
+    # Step 1: Contractions
     try:
         query = contractions.fix(query)
     except Exception:
         pass
     
-    # Step 2: Fix repeated characters (3+ → 2)
+    # Step 2: Fix repeated characters
     query = re.sub(r'(.)\1{2,}', r'\1\1', query)
     
-    # Step 3: Skip LLM for short commands / greetings
+    # Step 3: Skip LLM for short commands
     q_clean = query.rstrip("?!.,").strip()
     if q_clean in SKIP_LLM_EXACT:
+        _REWRITE_CACHE[query] = query
+        _save_disk_cache()
         return query
     
-    # Step 4: Try LLM
+    # Step 4: Skip LLM for very short queries (1-2 words) — use SymSpell
+    word_count = len(query.split())
+    if word_count <= 2:
+        protected = get_protected_words()
+        result = fix_with_symspell(query, protected)
+        _REWRITE_CACHE[query] = result
+        _save_disk_cache()
+        return result
+    
+    # Step 5: Use LLM for 3+ word queries
     corrected = fix_with_llm(query)
     if corrected:
+        _REWRITE_CACHE[query] = corrected
+        _save_disk_cache()
         return corrected
     
-    # Step 5: Fallback to SymSpell
+    # Step 6: Fallback to SymSpell
     protected = get_protected_words()
-    return fix_with_symspell(query, protected)
+    result = fix_with_symspell(query, protected)
+    _REWRITE_CACHE[query] = result
+    _save_disk_cache()  # Persist to disk
+    return result

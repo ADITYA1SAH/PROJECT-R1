@@ -7,6 +7,16 @@ def get_memory_statement(command):
     if match:
         key = match.group(1).strip().replace(" ", "_")
         value = match.group(2).strip()
+        
+        # Sanity check: if value contains " is " again, it's probably a mangled statement
+        # Take only the first part before the second " is "
+        if " is " in value.lower():
+            value = value.split(" is ")[0].strip()
+        
+        # Also reject if value is too long (over 100 chars)
+        if len(value) > 100:
+            return None
+        
         return {
             "intent": "remember",
             "key": key,
@@ -102,24 +112,45 @@ def get_recall_command(command):
 
 
 def get_personal_lookup(command):
+    """
+    Extract the key from personal questions.
+    Handles: "what is my X", "where do i X", "when is my X", etc.
+    """
     command = command.lower().strip()
     
-    if not command.startswith(("what is my ", "what's my ", "where is my ", "when is my ", "do i have a ")):
-        return None
+    # Special cases first
+    special_cases = {
+        "where do i live": "my_location",
+        "where am i": "my_location",
+        "where do i stay": "my_location",
+        "when is my birthday": "my_birthday",
+        "how old am i": "age",
+        "do i have a pet": "my_pet",
+        "do i have a pet?": "my_pet",
+        "who am i": "name",
+        "what is my name": "name",
+    }
     
-    for prefix in ["what is my ", "what's my ", "where is my ", "when is my ", "do i have a "]:
+    if command in special_cases:
+        return special_cases[command]
+    
+    # Standard prefix patterns (including "do you remember my X")
+    prefixes = [
+        "what is my ", "what's my ", "where is my ", "where's my ",
+        "when is my ", "when's my ", "who is my ", "do i have a ",
+        "do you remember my ", "do you remember ",
+        "tell me about my ", "tell me about ",
+    ]
+    
+    for prefix in prefixes:
         if command.startswith(prefix):
             key = command.replace(prefix, "").strip()
             key = re.sub(r'[^\w\s]', '', key)
             key = key.replace(" ", "_")
-            
-            # Special case: "name" should map to "name" (not "my_name")
-            if key == "name":
-                return "name"
-            
             if not key.startswith("my_"):
                 key = f"my_{key}"
             return key
+    
     return None
 
 

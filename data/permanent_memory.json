@@ -70,5 +70,21 @@
         "context": "",
         "timestamp": "2026-09-20T13:56:34.581946",
         "archived": false
+    },
+    {
+        "id": 10,
+        "fact": "sister is ananyawat: my name",
+        "category": "family",
+        "context": "",
+        "timestamp": "2026-09-28T18:02:22.250141",
+        "archived": false
+    },
+    {
+        "id": 11,
+        "fact": "sister: ananya",
+        "category": "family",
+        "context": "",
+        "timestamp": "2026-09-28T18:31:47.642757",
+        "archived": false
     }
 ]
