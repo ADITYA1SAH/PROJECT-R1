@@ -35,7 +35,9 @@ COMMAND_EXACT = {
 # =========================
 CHAT_EXACT = {
     "hi", "hello", "hey", "yo", "sup", "wassup",
+    "hey bro", "hey raf", "hi bro", "hi raf", "hello bro", "hello raf",
     "good morning", "good afternoon", "good evening", "good night",
+    "good morning bro", "good afternoon bro", "good evening bro", "good night bro",
     "thanks", "thank you", "ty", "ok", "okay", "cool", "nice",
     "lol", "haha", "bye", "goodbye", "see you",
 }

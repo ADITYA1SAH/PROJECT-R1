@@ -3836,3 +3836,98 @@ Today's Milestone:
 Next Goal:
 • Full regression test again (verify all fixes)
 • Begin Phase 8 — Vision (Face, Lens, Webcam)
+
+==============================
+Day 45 - RAF Face App + Brain Integration
+==============================
+Date: 2026-10-08
+Version: v0.0.3 Alpha
+Time Planned: ~4 Hours
+Actual Time: ~4 Hours
+
+Completed:
+✓ Created modules/face/ folder
+✓ Created raf_app.py with PyQt6 face
+✓ Designed BMO-inspired pixel face (dark blue bg, cyan eyes/mouth)
+✓ Added natural animations (breathing, blinking, micro-movements)
+✓ Added glasses (later removed per user preference)
+✓ Added smooth eased blink (removed jerky linear blink)
+✓ Added speaking mouth animation (opens/closes while TTS runs)
+✓ Added expression system (happy, curious, thinking, sad)
+✓ Connected app input bar → brain.process_command()
+✓ Captured brain output via contextlib.redirect_stdout
+✓ Added response cleanup (strip debug lines, auto-correct markers)
+✓ Added expression detection from response text
+✓ Added TTS threading (background thread for voice)
+✓ Wrapped brain + voice calls in try/except for safety
+✓ Added History button (shows recent conversation)
+✓ Added Settings button (placeholder)
+✓ Added Mode button (cycles through modes)
+✓ Added Clear button
+✓ Fixed "No module named core" by adding project root to sys.path
+
+Bugs Fixed:
+✓ ModuleNotFoundError: core (fixed with sys.path.insert)
+✓ NameError: os not defined (fixed import order)
+✓ App crashed on voice (fixed with threading)
+✓ Jerky blink (fixed with eased curve)
+✓ Static mouth during speech (fixed with mouth_open animation)
+✓ Duplicate methods in RAFApp (cleaned up)
+✓ Missing `send_message` outside class (moved inside)
+
+Architecture Improvements:
+✓ Separated RAFFace (widget) from RAFApp (main window)
+✓ Face uses QTimer for 60 FPS animation
+✓ Speaking runs in background thread
+✓ Response capture via stdout redirection
+✓ Expression mapping from response keywords
+
+Testing Results:
+✓ App opens with RAF face
+✓ Blinking is smooth
+✓ Eyes/mouth animate
+✓ Input bar accepts text
+✓ Brain responds (verified with "hey bro")
+✓ History/Mode/Clear buttons work
+⚠️ Voice crashes were fixed with threading
+⚠️ "hey bro" goes to LLM instead of greeting (minor)
+
+Known Issues (Fix Later):
+⚠️ "hey bro" should trigger greeting, not LLM
+⚠️ Some responses include cricket context from memory
+⚠️ Voice still a bit rough
+
+Current Progress:
+Foundation...............100%
+Brain....................100%
+Brain (Rebuilt)..........100%
+Query Classifier.........95%
+Typo Correction..........100%
+Memory...................100%
+Permanent Memory.........100%
+Mem0 Semantic Memory.....100%
+Family/Friend/Personal...100%
+Voice Output.............100%
+Voice Input..............100%
+Modes System.............100%
+Internet Search...........95%
+Face App.................40%
+Vision (Webcam)...........0%
+Lens (Screen).............0%
+Workspace Control..........0%
+Local LLM.................70%
+
+Today's Milestone:
+• RAF has a face — pixel-style with glasses
+• App connected to brain — typing gets responses
+• Face animates (blink, breathe, speak)
+• Expression changes based on RAF's mood
+• Voice speaks responses
+• UI buttons work (History, Mode, Clear)
+
+Next Goal:
+• Fix "hey bro" classification (should be greeting)
+• Add Webcam detection (Phase 8.3)
+• Add Face Recognition (knows Aditya)
+• Add Lens (screen sharing)
+• Polish Face App (more expressions, better animations)
