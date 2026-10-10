@@ -1,12 +1,6 @@
 {
-  "tell me about my frind rohan": "tell me about my friend rohan",
-  "who is taylor swift": "who is taylor swift",
-  "my sister is ananya": "my sister is ananya",
-  "hello": "hello",
-  "who are you": "who are you",
-  "what is my name": "what is my name",
-  "what is the weather in noida": "what is the weather in noida",
-  "who is elon musk": "who is elon musk",
-  "show family": "show family",
+  "allow camera 0": "allow camera 0",
+  "take photo": "take photo",
+  "list cameras": "list cameras",
   "exit": "exit"
 }

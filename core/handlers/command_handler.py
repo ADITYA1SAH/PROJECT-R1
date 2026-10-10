@@ -11,6 +11,72 @@ def handle_command(command):
     Handle all commands. Returns True if handled, False otherwise.
     """
     command = command.strip().lower()
+
+
+    # =========================
+    # WEBCAM COMMANDS
+    # =========================
+    if command == "list cameras" or command == "detect cameras":
+        from modules.vision.webcam import list_cameras, get_camera_info
+        cameras = list_cameras()
+        if not cameras:
+            print("RAF: No cameras detected.")
+            return True
+        print(f"RAF: Found {len(cameras)} camera(s):")
+        for idx in cameras:
+            info = get_camera_info(idx)
+            if info:
+                print(f"   • Camera {idx} — {info['width']}x{info['height']}")
+        return True
+
+    if command == "check new cameras":
+        from modules.vision.webcam import check_for_new_cameras
+        new = check_for_new_cameras()
+        if not new:
+            print("RAF: No new cameras detected.")
+            return True
+        print(f"RAF: Found {len(new)} new camera(s): {new}")
+        print("RAF: Say 'allow camera 0' to permit one.")
+        return True
+
+    if command.startswith("allow camera "):
+        parts = command.split()
+        if len(parts) == 3 and parts[2].isdigit():
+            idx = int(parts[2])
+            from modules.vision.webcam import save_permission, is_permitted
+            if is_permitted(idx):
+                print(f"RAF: Camera {idx} is already permitted.")
+            else:
+                save_permission(idx)
+                print(f"RAF: ✅ Camera {idx} permission granted.")
+        else:
+            print("RAF: Usage: allow camera 0")
+        return True
+
+    if command == "take photo" or command == "take a photo":
+        from modules.vision.webcam import capture_frame, list_cameras, is_permitted
+        cameras = list_cameras()
+        if not cameras:
+            print("RAF: No camera available.")
+            return True
+        idx = cameras[0]
+        if not is_permitted(idx):
+            print(f"RAF: I need permission first. Say 'allow camera {idx}'.")
+            return True
+        frame = capture_frame(idx)
+        if frame is None:
+            print("RAF: Failed to capture frame.")
+            return True
+        # Save the frame
+        import os
+        os.makedirs("data/photos", exist_ok=True)
+        from datetime import datetime
+        filename = f"data/photos/photo_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
+        import cv2
+        cv2.imwrite(filename, frame)
+        print(f"RAF: 📸 Photo saved to {filename}")
+        return True
+
     
     # =========================
     # EXIT

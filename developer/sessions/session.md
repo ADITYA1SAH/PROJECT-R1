@@ -3931,3 +3931,93 @@ Next Goal:
 • Add Face Recognition (knows Aditya)
 • Add Lens (screen sharing)
 • Polish Face App (more expressions, better animations)
+
+==============================
+Day 46 - Webcam Detection + Command Fix
+==============================
+Date: 2026-10-10
+Version: v0.0.3 Alpha
+Time Planned: ~3 Hours
+Actual Time: ~3 Hours
+
+Completed:
+✓ Fixed "hey bro" classifier (now triggers greeting, not LLM)
+✓ Installed opencv-python for camera access
+✓ Created modules/vision/ folder
+✓ Created modules/vision/webcam.py — camera detection module
+✓ Added list_cameras() — detects available cameras
+✓ Added get_camera_info() — returns resolution/fps
+✓ Added capture_frame() — captures a single photo
+✓ Added permission system (data/webcam_permissions.txt)
+✓ Added check_for_new_cameras() — detects new cameras
+✓ Added 4 webcam commands to brain:
+   - list cameras
+   - check new cameras
+   - allow camera X
+   - take photo
+✓ Fixed typo rewriter corrupting commands ("allow" → "alow")
+✓ Added command preservation in query_rewriter (Step 3.5)
+✓ Added command words to PROTECTED_WORDS
+✓ Consolidated duplicate Step 3.5 blocks
+✓ Tested all webcam commands end-to-end
+
+Bugs Fixed:
+✓ "hey bro" → was going to LLM, now greeting
+✓ "allow camera 0" → was corrupted to "alow camera 0" by SymSpell
+✓ "take photo" → typo correction was breaking the command
+✓ Duplicate Step 3.5 blocks in query_rewriter.py
+✓ __pycache__ loading stale modules (lesson learned)
+
+Architecture Improvements:
+✓ New module: modules/vision/
+✓ Permission system for cameras (data/webcam_permissions.txt)
+✓ Photos saved to data/photos/
+✓ Command preservation in typo rewriter
+✓ Protected words list extended with command keywords
+
+Testing Results:
+✓ "hey bro" → greeting ✅
+✓ "list cameras" → "Found 1 camera(s): Camera 0 — 640x480" ✅
+✓ "check new cameras" → "Found 1 new camera(s): [0]" ✅
+✓ "allow camera 0" → "✅ Camera 0 permission granted." ✅
+✓ "take photo" → "📸 Photo saved to data/photos/photo_20261010_194053.jpg" ✅
+✓ Photo file confirmed saved ✅
+
+Known Issues (Fix Later):
+⚠️ OpenCV DSHOW warnings (harmless — can suppress with env var)
+⚠️ fps: -1 on camera info (Windows DSHOW quirk — non-critical)
+
+Current Progress:
+Foundation...............100%
+Brain....................100%
+Brain (Rebuilt)..........100%
+Query Classifier.........98%
+Typo Correction..........100%
+Command Preservation.....100%
+Memory...................100%
+Permanent Memory.........100%
+Mem0 Semantic Memory.....100%
+Family/Friend/Personal...100%
+Voice Output.............100%
+Voice Input..............100%
+Modes System.............100%
+Internet Search...........95%
+Face App.................40%
+Webcam Detection.........100%
+Face Recognition..........0%
+Lens (Screen).............0%
+Workspace Control..........0%
+Local LLM.................70%
+
+Today's Milestone:
+• RAF has eyes — camera detection works
+• Photo capture works
+• Permission system for cameras
+• Command typo corruption fixed
+• RAF now remembers which cameras you've permitted
+
+Next Goal:
+• Wire webcam into Face App (show camera feed)
+• Add face recognition (RAF knows Aditya)
+• Add "presence detection" (RAF sees when you sit down)
+• Begin Lens feature (screen sharing)

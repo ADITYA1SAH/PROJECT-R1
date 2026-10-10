@@ -20,6 +20,7 @@ import re
 # =========================
 COMMAND_PREFIXES = (
     "show ", "mode ", "find ", "forget ", "remember ", "export ",
+    "allow camera ",
 )
 
 COMMAND_EXACT = {
@@ -27,6 +28,9 @@ COMMAND_EXACT = {
     "show memory", "show session", "show family",
     "show experiences", "show today", "show yesterday",
     "memory maintenance", "clean memory", "export memory",
+    # Webcam commands
+    "list cameras", "detect cameras", "check new cameras",
+    "take photo", "take a photo",
 }
 
 
@@ -178,6 +182,7 @@ def classify_query(query):
         return "command"
     for prefix in COMMAND_PREFIXES:
         if q.startswith(prefix):
+            print(f"🔍 DEBUG: matched command prefix '{prefix}'")
             return "command"
     
     # =========================

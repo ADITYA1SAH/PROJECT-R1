@@ -217,6 +217,19 @@ def rewrite_query(query):
         _save_disk_cache()
         return query
     
+
+    
+    # Step 3.5: Preserve command prefixes exactly (no typo correction)
+    command_prefixes = (
+        "allow camera", "list cameras", "check new cameras",
+        "take photo", "take a photo", "mode ",
+        "show ", "find ", "forget ", "remember ", "export ",
+    )
+    if any(q_clean.startswith(p) for p in command_prefixes):
+        _REWRITE_CACHE[query] = query
+        _save_disk_cache()
+        return query
+    
     # Step 4: Skip LLM for very short queries (1-2 words) — use SymSpell
     word_count = len(query.split())
     if word_count <= 2:
