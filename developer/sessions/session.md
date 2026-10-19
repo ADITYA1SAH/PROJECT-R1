@@ -4021,3 +4021,59 @@ Next Goal:
 • Add face recognition (RAF knows Aditya)
 • Add "presence detection" (RAF sees when you sit down)
 • Begin Lens feature (screen sharing)
+
+==============================
+Day 47 - Webcam Presence + Lip Sync Experiment
+==============================
+Date: 2026-10-19
+Version: v0.0.3 Alpha
+Time Planned: ~3 Hours
+Actual Time: ~3 Hours
+
+Completed:
+✓ Installed MediaPipe for modern face detection
+✓ Added background thread for Webcam Presence Detection
+✓ Added auto-greeting when RAF sees Aditya on webcam
+✓ Fixed PyQt6 Slot error (@pyqtSlot) for presence detection
+✓ Fixed OpenCV/Missing Haarcascade issue by switching to MediaPipe
+✓ Removed eye glow (cleaner look)
+✓ Attempted Edge-TTS Lip Sync (testing exact audio durations)
+✓ Reverted Face App back to stable version (pyttsx3) due to desync issues
+
+Bugs Fixed:
+✓ MediaPipe missing 'solutions' module (switched to Tasks API)
+✓ Webcam timeout crash (moved to background thread)
+✓ App crashed on invokeMethod (added @pyqtSlot)
+
+Known Issues (Fix Tomorrow):
+⚠️ Face App Lip Sync is currently desynced (reverted to stable version)
+⚠️ Glasses squish during blink (needs decoupling from eye animation)
+⚠️ Edge-TTS integration caused issues and was rolled back
+
+Current Progress:
+Foundation...............100%
+Brain....................100%
+Brain (Rebuilt)..........100%
+Query Classifier.........98%
+Memory...................100%
+Voice (Terminal).........100%
+Voice (Face App).........⚠️ (Reverted to stable pyttsx3)
+Modes System.............100%
+Internet Search...........95%
+Face App (UI)............80%
+Face App (Presence)......100%
+Webcam Detection.........100%
+Face Recognition..........0%
+Lens (Screen).............0%
+Workspace Control..........0%
+Local LLM.................70%
+
+Today's Milestone:
+• RAF can now see you when you sit in front of the webcam!
+• RAF auto-greets you via the Face App.
+• MediaPipe Tasks API is fully integrated and working.
+
+Next Goal (New Chat):
+• Switch Face App back to Edge-TTS for perfect lip sync.
+• Fix glasses animation (stop squishing during blink).
+• Begin Face Recognition (Aditya vs Guest).

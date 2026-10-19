@@ -1,5 +1,5 @@
 """
-RAF Face App — connected to brain
+RAF Face App — Stable pyttsx3 version with working presence detection.
 """
 
 import sys
@@ -8,19 +8,20 @@ import random
 import io
 import os
 import contextlib
-
-# Add project root to path so we can import `core` and `modules`
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, PROJECT_ROOT)
-
+import cv2
+import threading
+import time
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QVBoxLayout,
     QHBoxLayout, QPushButton, QLineEdit
 )
-from PyQt6.QtCore import Qt, QTimer, QPointF, QRectF
+from PyQt6.QtCore import Qt, QTimer, QPointF, QRectF, pyqtSlot
 from PyQt6.QtGui import QPainter, QColor, QPen, QBrush
 
+# Add project root to path
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
 # =========================
 # COLORS
@@ -31,9 +32,8 @@ MOUTH_COLOR = QColor(0, 245, 225)
 GLASSES_COLOR = QColor(0, 245, 225)
 GLASSES_LENS = QColor(0, 245, 225, 20)
 
-
 class RAFFace(QWidget):
-    """RAF's face with smooth blink + talking animation."""
+    """RAF's face with glasses and natural animations."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -46,17 +46,18 @@ class RAFFace(QWidget):
         self.micro_offset_x = 0.0
         self.micro_offset_y = 0.0
 
-        # Blink (smooth eased)
-        self.blink_state = "open"     # "open", "closing", "opening"
+        # Smooth blink
+        self.blink_state = "open"     
         self.blink_progress = 0.0
         self.eye_blink = 0.0
 
         # Speaking animation
         self.is_speaking = False
+        self.speak_timer = 0
+        self.word_timer = 0
+        self.target_mouth = 0.0
         self.mouth_open = 0.0
-        self.mouth_phase = 0.0
 
-        # Timers
         self.timer = QTimer()
         self.timer.timeout.connect(self._animate)
         self.timer.start(16)
@@ -74,31 +75,32 @@ class RAFFace(QWidget):
         self.micro_offset_x = math.sin(self.time * 3.7) * 0.8
         self.micro_offset_y = math.cos(self.time * 2.3) * 0.8
 
-        # Smooth blink (eased)
-        speed = 0.08
-
+        # Smooth blink
+        speed = 0.10
         if self.blink_state == "closing":
             self.blink_progress += speed
             if self.blink_progress >= 1.0:
                 self.blink_progress = 1.0
                 self.blink_state = "opening"
-            eased = 1 - (1 - self.blink_progress) ** 2
-            self.eye_blink = eased
-
+            self.eye_blink = math.sin((self.blink_progress * math.pi) / 2)
         elif self.blink_state == "opening":
             self.blink_progress -= speed
             if self.blink_progress <= 0.0:
                 self.blink_progress = 0.0
                 self.blink_state = "open"
-            eased = self.blink_progress ** 1.5
-            self.eye_blink = eased
+            self.eye_blink = math.sin((self.blink_progress * math.pi) / 2)
 
-        # Speaking → mouth moves
-        if self.is_speaking:
-            self.mouth_phase += 0.35
-            raw = (math.sin(self.mouth_phase) + math.sin(self.mouth_phase * 1.7)) / 2
-            self.mouth_open = (raw + 1) / 2
+        # Speaking (Word-to-Word simulation)
+        if self.speak_timer > 0:
+            self.speak_timer -= 1
+            if self.word_timer <= 0:
+                self.target_mouth = random.choice([0.2, 0.6, 1.0])
+                self.word_timer = random.randint(5, 10)
+            else:
+                self.word_timer -= 1
+            self.mouth_open += (self.target_mouth - self.mouth_open) * 0.3
         else:
+            self.is_speaking = False
             self.mouth_open += (0.0 - self.mouth_open) * 0.15
 
         self.update()
@@ -111,9 +113,6 @@ class RAFFace(QWidget):
 
     def set_expression(self, expression):
         self.expression = expression
-
-    def set_speaking(self, speaking):
-        self.is_speaking = speaking
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -133,17 +132,12 @@ class RAFFace(QWidget):
         eye_squeeze = 1.0 - self.eye_blink
 
         for eye_x in [cx - eye_spacing, cx + eye_spacing]:
-            painter.setBrush(QBrush(QColor(0, 245, 225, 40)))
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.drawRoundedRect(
-                QRectF(eye_x - eye_w, eye_y - 10, eye_w * 2, eye_h * eye_squeeze + 20),
-                eye_w, eye_w
-            )
             eye_rect = QRectF(eye_x - eye_w / 2, eye_y, eye_w, eye_h * eye_squeeze)
             painter.setBrush(QBrush(EYE_COLOR))
+            painter.setPen(Qt.PenStyle.NoPen)
             painter.drawRoundedRect(eye_rect, eye_w / 2, eye_w / 2)
 
-        # Glasses
+        # Glasses (Fixed size — NO squish)
         frame_w = eye_w + 30
         frame_h = eye_h + 30
         frame_y = eye_y - 15
@@ -151,7 +145,7 @@ class RAFFace(QWidget):
         painter.setBrush(QBrush(GLASSES_LENS))
         painter.setPen(QPen(GLASSES_COLOR, 4))
         for eye_x in [cx - eye_spacing, cx + eye_spacing]:
-            frame_rect = QRectF(eye_x - frame_w / 2, frame_y, frame_w, frame_h * eye_squeeze)
+            frame_rect = QRectF(eye_x - frame_w / 2, frame_y, frame_w, frame_h)
             painter.drawRoundedRect(frame_rect, 15, 15)
 
         bridge_y = frame_y + frame_h / 2
@@ -176,7 +170,6 @@ class RAFFace(QWidget):
         mouth_y = cy + 40
 
         if self.is_speaking or self.mouth_open > 0.05:
-            # Open oval mouth (talking)
             open_h = mouth_h_base * (0.4 + self.mouth_open * 1.2)
             painter.setBrush(QBrush(MOUTH_COLOR))
             painter.setPen(Qt.PenStyle.NoPen)
@@ -187,52 +180,29 @@ class RAFFace(QWidget):
             )
         else:
             mouth_h = self.height() * 0.18
-
             if self.expression == "happy":
                 painter.setBrush(QBrush(MOUTH_COLOR))
                 painter.setPen(Qt.PenStyle.NoPen)
-                painter.drawRoundedRect(
-                    QRectF(mouth_x, mouth_y, mouth_w, mouth_h),
-                    mouth_w / 2, mouth_w / 2
-                )
+                painter.drawRoundedRect(QRectF(mouth_x, mouth_y, mouth_w, mouth_h), mouth_w / 2, mouth_w / 2)
                 painter.setBrush(QBrush(BG_COLOR))
                 painter.drawRect(QRectF(mouth_x - 3, mouth_y - 3, mouth_w + 6, mouth_h / 2))
-
             elif self.expression == "curious":
                 painter.setBrush(QBrush(MOUTH_COLOR))
                 painter.setPen(Qt.PenStyle.NoPen)
-                painter.drawEllipse(
-                    QPointF(cx, mouth_y + mouth_h / 2),
-                    mouth_w * 0.35,
-                    mouth_h * 0.5
-                )
-
+                painter.drawEllipse(QPointF(cx, mouth_y + mouth_h / 2), mouth_w * 0.35, mouth_h * 0.5)
             elif self.expression == "thinking":
                 painter.setPen(QPen(MOUTH_COLOR, 10))
                 painter.setBrush(Qt.BrushStyle.NoBrush)
-                painter.drawLine(
-                    int(cx - mouth_w / 2), int(mouth_y + mouth_h / 2),
-                    int(cx + mouth_w / 2), int(mouth_y + mouth_h / 2)
-                )
-
+                painter.drawLine(int(cx - mouth_w / 2), int(mouth_y + mouth_h / 2), int(cx + mouth_w / 2), int(mouth_y + mouth_h / 2))
             elif self.expression == "sad":
                 painter.setBrush(QBrush(MOUTH_COLOR))
                 painter.setPen(Qt.PenStyle.NoPen)
-                painter.drawRoundedRect(
-                    QRectF(mouth_x, mouth_y - 15, mouth_w, mouth_h),
-                    mouth_w / 2, mouth_w / 2
-                )
+                painter.drawRoundedRect(QRectF(mouth_x, mouth_y - 15, mouth_w, mouth_h), mouth_w / 2, mouth_w / 2)
                 painter.setBrush(QBrush(BG_COLOR))
-                painter.drawRect(QRectF(
-                    mouth_x - 3,
-                    mouth_y + mouth_h / 2 - 15,
-                    mouth_w + 6,
-                    mouth_h / 2 + 15
-                ))
-
+                painter.drawRect(QRectF(mouth_x - 3, mouth_y + mouth_h / 2 - 15, mouth_w + 6, mouth_h / 2 + 15))
 
 class RAFApp(QMainWindow):
-    """Main RAF window — connected to brain."""
+    """Main RAF window — stable pyttsx3 version with presence."""
 
     def __init__(self):
         super().__init__()
@@ -314,6 +284,65 @@ class RAFApp(QMainWindow):
 
         layout.addLayout(bottom)
 
+        # Presence Detection
+        self.last_presence_greet = 0
+        self.presence_thread = threading.Thread(target=self._presence_loop, daemon=True)
+        self.presence_thread.start()
+
+    def _presence_loop(self):
+        try:
+            import mediapipe as mp
+            from mediapipe.tasks import python
+            from mediapipe.tasks.python import vision
+        except ImportError:
+            print("⚠️ MediaPipe not installed.")
+            return
+
+        model_path = "data/blaze_face_short_range.tflite"
+        if not os.path.exists(model_path):
+            import urllib.request
+            os.makedirs("data", exist_ok=True)
+            print("⬇️ Downloading face detection model...")
+            urllib.request.urlretrieve(
+                "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite",
+                model_path
+            )
+            print("✅ Model downloaded.")
+
+        base_options = python.BaseOptions(model_asset_path=model_path)
+        options = vision.FaceDetectorOptions(base_options=base_options)
+        detector = vision.FaceDetector.create_from_options(options)
+
+        cap = cv2.VideoCapture(0)
+        if not cap.isOpened():
+            print("⚠️ Webcam not available for presence detection.")
+            return
+
+        print("👀 Presence detection started (Tasks API).")
+
+        while True:
+            ret, frame = cap.read()
+            if ret:
+                rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
+                detection_result = detector.detect(mp_image)
+
+                if detection_result.detections:
+                    now = time.time()
+                    if now - self.last_presence_greet > 30:
+                        self.last_presence_greet = now
+                        from PyQt6.QtCore import QMetaObject, Qt
+                        QMetaObject.invokeMethod(self, "on_presence_detected", Qt.ConnectionType.QueuedConnection)
+            time.sleep(1)
+
+    @pyqtSlot()
+    def on_presence_detected(self):
+        if not self.face.is_speaking:
+            self.face.set_expression("happy")
+            greeting = "Hey Aditya! I see you there."
+            self.caption.setText(f"RAF: {greeting}")
+            self._speak(greeting)
+
     def _btn_style(self):
         return """
             QPushButton {
@@ -337,7 +366,6 @@ class RAFApp(QMainWindow):
 
         self.caption.setText(f"You: {text}")
         self.input.clear()
-
         self.face.set_expression("thinking")
         QApplication.processEvents()
 
@@ -397,18 +425,23 @@ class RAFApp(QMainWindow):
         return "happy"
 
     def _speak(self, text):
-        """Speak text in a background thread so UI stays responsive."""
+        """Speak text in a background thread and animate mouth for the right duration."""
         import threading
+
+        char_count = len(text)
+        estimated_seconds = max(1.0, char_count / 15.0)
+        
+        self.face.speak_timer = int(estimated_seconds * 60)
 
         def worker():
             try:
-                self.face.set_speaking(True)
                 from modules.voice.voice import speak
                 speak(text)
             except Exception as e:
                 print(f"TTS error: {e}")
             finally:
-                self.face.set_speaking(False)
+                self.face.speak_timer = 0
+                self.face.is_speaking = False
 
         t = threading.Thread(target=worker, daemon=True)
         t.start()
@@ -452,13 +485,11 @@ class RAFApp(QMainWindow):
     def clear_chat(self):
         self.caption.setText("Cleared. Ready for new chat.")
 
-
 def main():
     app = QApplication(sys.argv)
     window = RAFApp()
     window.show()
     sys.exit(app.exec())
-
 
 if __name__ == "__main__":
     main()
