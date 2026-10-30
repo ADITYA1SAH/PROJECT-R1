@@ -371,6 +371,12 @@ class RAFApp(QMainWindow):
 
         try:
             response = self._process_with_raf(text)
+        except KeyboardInterrupt:
+            # User typed "exit" — close the app cleanly
+            self.caption.setText("RAF: Goodbye! 👋")
+            QApplication.processEvents()
+            QTimer.singleShot(500, self.close)
+            return
         except Exception as e:
             response = f"(brain error: {e})"
 
@@ -471,11 +477,18 @@ class RAFApp(QMainWindow):
             self.caption.setText("Settings coming soon")
 
     def switch_mode(self):
+        """Cycle through all available modes (includes 'talking')."""
         try:
-            from modules.modes.mode import get_mode_config, set_mode
+            from modules.modes.mode import get_mode_config, set_mode, list_modes
             current = get_mode_config()["name"].lower().replace(" mode", "")
-            modes = ["normal", "professional", "idle", "emergency"]
-            idx = (modes.index(current) + 1) % len(modes)
+            modes = list_modes()   # dynamically reads from mode.py — includes "talking"
+
+            # If current mode isn't in list (edge case), start from normal
+            if current not in modes:
+                idx = 0
+            else:
+                idx = (modes.index(current) + 1) % len(modes)
+
             new_mode = modes[idx]
             set_mode(new_mode)
             self.caption.setText(f"Mode switched to: {new_mode.title()}")
@@ -485,11 +498,13 @@ class RAFApp(QMainWindow):
     def clear_chat(self):
         self.caption.setText("Cleared. Ready for new chat.")
 
+
 def main():
     app = QApplication(sys.argv)
     window = RAFApp()
     window.show()
     sys.exit(app.exec())
+
 
 if __name__ == "__main__":
     main()

@@ -219,6 +219,10 @@ def find_relevant_memories(question):
 
     for key, (value, score) in sorted_memories[:5]:
 
+        # Unwrap nested dicts — return just the raw value
+        if isinstance(value, dict):
+            value = value.get("value", value)
+
         result[key] = value
 
     return result

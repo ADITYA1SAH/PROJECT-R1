@@ -24,7 +24,8 @@ OLLAMA_URL = "http://localhost:11434/api/generate"
 # Model mapping for each mode
 MODEL_MAP = {
     "normal": "phi3:3.8b-mini-4k-instruct-q5_K_M",
-    "professional": "deepseek-coder:6.7b",
+    "professional": "deepseek-coder:6.7b-instruct-q4_K_M",
+    "talking": "phi3:3.8b-mini-4k-instruct-q5_K_M",         # ← ADD
     "idle": "phi3:3.8b-mini-4k-instruct-q5_K_M",
     "emergency": "phi3:3.8b-mini-4k-instruct-q5_K_M"
 }

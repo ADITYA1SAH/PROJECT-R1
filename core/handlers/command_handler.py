@@ -83,6 +83,15 @@ def handle_command(command):
     # =========================
     if command in ["exit", "quit", "goodbye"]:
         print("Goodbye!")
+        # Check if running inside Face App (PyQt) — don't crash the window
+        try:
+            from PyQt6.QtWidgets import QApplication
+            if QApplication.instance() is not None:
+                # We're in Face App — just raise a flag, let the app handle closing
+                raise KeyboardInterrupt("exit requested")
+        except ImportError:
+            pass
+        # Terminal mode — clean exit
         sys.exit(0)
     
     # =========================

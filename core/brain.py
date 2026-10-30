@@ -57,6 +57,30 @@ def process_command(command):
     # 1. Log user message
     # =========================
     add_message("user", command)
+
+def process_command(command):
+    """
+    Process a user command.
+    This is the single entry point — clean and simple.
+    """
+    command = command.strip().lower()
+    
+    if not command:
+        return
+    
+    # =========================
+    # 1. Track session command count
+    # =========================
+    try:
+        from modules.session.session import add_command
+        add_command()
+    except Exception:
+        pass  # Silent fail — session tracking is optional
+    
+    # =========================
+    # 2. Log user message
+    # =========================
+    add_message("user", command)
     
     # =========================
     # 2. Classify query type

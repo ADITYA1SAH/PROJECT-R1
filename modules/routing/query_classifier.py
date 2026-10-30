@@ -19,7 +19,8 @@ import re
 # COMMAND TRIGGERS
 # =========================
 COMMAND_PREFIXES = (
-    "show ", "mode ", "find ", "forget ", "remember ", "export ",
+    "show ", "mode ", "find ", "forget ",
+    "export ",
     "allow camera ",
 )
 
